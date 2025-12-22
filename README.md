@@ -33,8 +33,8 @@
 
 1. **下载项目**：
    ```bash
-   git clone https://github.com/your-username/geek-faka.git
-   cd geek-faka
+   git clone https://github.com/huangzijian888/GeekFaka.git
+   cd GeekFaka
    ```
 
 2. **配置参数**：
