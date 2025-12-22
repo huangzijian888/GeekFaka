@@ -5,7 +5,7 @@ import { getPaymentAdapter } from "@/lib/payments/registry";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { productId, quantity = 1, email, paymentMethod = "dummy", options } = body;
+    const { productId, quantity = 1, email, paymentMethod = "epay", options } = body;
 
     if (!productId || !email) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

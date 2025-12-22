@@ -26,11 +26,5 @@ export async function GET() {
     channels.push({ id: "wechat", name: "微信支付", icon: "credit-card", provider: "epay" });
   }
 
-  // Fallback for demo if nothing configured? 
-  // No, better to show empty state or dummy if in dev mode
-  if (channels.length === 0 && process.env.NODE_ENV === "development") {
-     channels.push({ id: "dummy", name: "模拟支付 (Dev)", icon: "wallet", provider: "dummy" });
-  }
-
   return NextResponse.json(channels);
 }
