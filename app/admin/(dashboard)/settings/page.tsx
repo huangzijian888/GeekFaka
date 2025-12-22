@@ -149,17 +149,39 @@ export default function SettingsPage() {
         </TabsContent>
 
 
-        <TabsContent value="site">
+        <TabsContent value="site" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>站点信息</CardTitle>
-              <CardDescription>SEO 与 基础信息 (Coming Soon)</CardDescription>
+              <CardTitle>站点基础信息</CardTitle>
+              <CardDescription>配置网站的全局参数</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="p-8 text-center text-muted-foreground">
-                更多设置项正在开发中...
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <Label>网站标题</Label>
+                <Input 
+                  value={draftConfig.site_title || ""}
+                  onChange={e => handleChange("site_title", e.target.value)}
+                  placeholder="GeekFaka - 自动发货平台"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>网站 URL (用于支付回调)</Label>
+                <Input 
+                  value={draftConfig.site_url || ""}
+                  onChange={e => handleChange("site_url", e.target.value)}
+                  placeholder="https://your-domain.com"
+                />
+                <p className="text-xs text-muted-foreground">
+                  必须配置正确的域名（包含 https://），否则支付后无法自动发货。
+                </p>
               </div>
             </CardContent>
+            <CardFooter>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                保存配置
+              </Button>
+            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>

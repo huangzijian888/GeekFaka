@@ -12,6 +12,7 @@ export class EpayProvider implements PaymentAdapter {
   private publicKey: string = "";
   private privateKey: string = "";
   private isEnabled: boolean = false;
+  private siteUrl: string = "";
 
   constructor() {}
 
@@ -28,7 +29,8 @@ export class EpayProvider implements PaymentAdapter {
               "epay_public_key", 
               "epay_private_key",
               "epay_enabled",
-              "epay_channels"
+              "epay_channels",
+              "site_url"
             ] 
           }
         }
@@ -46,6 +48,12 @@ export class EpayProvider implements PaymentAdapter {
       this.signType = (config.epay_sign_type as "MD5" | "RSA") || "MD5";
       this.publicKey = config.epay_public_key || "";
       this.privateKey = config.epay_private_key || "";
+      
+      // Fallback logic for site URL
+      let url = config.site_url || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+      // Remove trailing slash if present
+      if (url.endsWith("/")) url = url.slice(0, -1);
+      this.siteUrl = url;
 
       if (this.apiUrl && !this.apiUrl.endsWith("/")) {
         this.apiUrl += "/";
@@ -56,6 +64,8 @@ export class EpayProvider implements PaymentAdapter {
       throw new Error("Payment configuration database error");
     }
   }
+
+  // ... (formatKey, getParamString, sign methods unchanged) ...
 
   private formatKey(key: string, type: "PUBLIC" | "PRIVATE"): string {
     if (!key) return "";
@@ -118,8 +128,8 @@ export class EpayProvider implements PaymentAdapter {
     }
 
     const type = options?.channel || "alipay"; 
-    const notifyUrl = `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/api/payments/epay/notify`;
-    const returnUrl = `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/orders/${orderNo}`;
+    const notifyUrl = `${this.siteUrl}/api/payments/epay/notify`;
+    const returnUrl = `${this.siteUrl}/orders/${orderNo}`;
 
     const params: Record<string, string> = {
       pid: this.pid,
@@ -144,7 +154,8 @@ export class EpayProvider implements PaymentAdapter {
       payUrl: payUrl
     };
   }
-
+  
+  // ... (verifyCallback unchanged except loadConfig call)
   async verifyCallback(data: any): Promise<PaymentCallbackData> {
     await this.loadConfig();
     
@@ -158,6 +169,7 @@ export class EpayProvider implements PaymentAdapter {
 
     if (isRSA) {
        if (!this.publicKey) throw new Error("RSA Public Key missing in settings");
+       
        const formattedKey = this.formatKey(this.publicKey, "PUBLIC");
        const verify = crypto.createVerify("RSA-SHA256");
        verify.update(this.getParamString(params as Record<string, string>));
