@@ -1,6 +1,20 @@
 # GeekFaka - 极客发卡系统
 
-GeekFaka 是一个基于 **Next.js 14** + **React 18** + **Prisma** 构建的现代化、高性能自动发卡系统。专为数字商品卖家设计，提供极简的部署体验和商业级的安全特性。
+它专为独立开发者、创作者和数字商品卖家设计，提供从商品展示、下单购买、支付对接（易支付/支付宝/微信）到自动发货的完整闭环。
+
+## 📸 界面预览
+
+| 前台首页 (Dark Mode) | 沉浸式购买弹窗 |
+| :---: | :---: |
+| ![Index](images/index.png) | ![Checkout](images/buy.png) |
+
+| 商品管理 (Markdown编辑器) | 系统设置 (在线配置) |
+| :---: | :---: |
+| ![Product Edit](images/Product-2.png) | ![Settings](images/Setting.png) |
+
+| 商品列表 | 订单查询 |
+| :---: | :---: |
+| ![Product List](images/Product.png) | ![Orders](images/order.png) |
 
 ## ✨ 核心特性
 
