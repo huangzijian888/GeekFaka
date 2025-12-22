@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { StockManager } from "@/components/admin/stock-manager"
 
@@ -328,10 +329,12 @@ export default function ProductsPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">描述</Label>
-              <Input
+              <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={4}
+                placeholder="输入商品的详细说明或使用说明..."
               />
             </div>
             <DialogFooter>
