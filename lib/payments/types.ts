@@ -31,7 +31,8 @@ export interface PaymentAdapter {
   createPayment(
     orderNo: string, 
     amount: number, 
-    description: string
+    description: string,
+    options?: { channel?: string } // e.g., "alipay", "wxpay"
   ): Promise<PaymentIntent>;
 
   /**

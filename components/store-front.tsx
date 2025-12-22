@@ -66,19 +66,27 @@ export function StoreFront({ categories }: { categories: Category[] }) {
     setLoading(true)
 
     try {
-      // In a real app, you would pass the actual selected payment method
-      // For this demo, we map the UI selection to our 'dummy' provider backend
-      const backendPaymentMethod = "dummy" 
+      // Use 'epay' provider but specify the channel (alipay/wxpay)
+      // This allows the EPay provider to set 'type=alipay' or 'type=wxpay'
+      const payload = {
+        productId: selectedProduct.id,
+        quantity,
+        email,
+        paymentMethod: "epay", 
+        options: {
+          channel: paymentMethod // 'alipay' or 'wechat' (mapped to 'wxpay' if needed)
+        }
+      }
+      
+      // Small fix: 'wechat' in UI radio group should map to 'wxpay' for most EPay gateways
+      if (paymentMethod === "wechat") {
+        payload.options.channel = "wxpay";
+      }
 
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: selectedProduct.id,
-          quantity,
-          email,
-          paymentMethod: backendPaymentMethod
-        })
+        body: JSON.stringify(payload)
       })
       
       const data = await res.json()

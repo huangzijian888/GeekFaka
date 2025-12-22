@@ -3,7 +3,7 @@ import { PaymentAdapter, PaymentIntent, PaymentStatus, PaymentCallbackData } fro
 export class DummyProvider implements PaymentAdapter {
   name = "dummy";
 
-  async createPayment(orderNo: string, amount: number, description: string): Promise<PaymentIntent> {
+  async createPayment(orderNo: string, amount: number, description: string, options?: { channel?: string }): Promise<PaymentIntent> {
     // In a real app, this would call an API.
     // Here we just return a fake link that acts as the "pay" action.
     console.log(`[DummyProvider] Creating payment for ${orderNo} - $${amount}`);
