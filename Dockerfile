@@ -12,7 +12,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Client (Default SQLite for build check, will be overwritten in entrypoint)
+# [NEW] Perform MySQL transformation during build time
+RUN if grep -q 'provider = "sqlite"' prisma/schema.prisma; then \
+    sed -i 's/provider = "sqlite"/provider = "mysql"/g' prisma/schema.prisma && \
+    sed -i 's/description String?/description String? @db.Text/g' prisma/schema.prisma && \
+    sed -i 's/value       String/value       String   @db.Text/g' prisma/schema.prisma; \
+    fi
+
 RUN npx prisma generate
 RUN yarn build
 
@@ -22,8 +28,9 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
+# Install OpenSSL and PRISMA CLI for migrations
+RUN apk add --no-cache openssl && \
+    npm install -g prisma@5.22.0
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
