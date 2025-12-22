@@ -3,7 +3,10 @@ version: '3'
 services:
   geekfaka:
     container_name: geekfaka-app
-    build: .
+    # 使用官方构建好的镜像 (推荐)
+    image: huangzijian888/geekfaka:latest
+    # 如果想手动构建，请取消下面两行的注释，并注释掉 image 行
+    # build: .
     restart: always
     ports:
       - "3000:3000"

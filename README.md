@@ -37,10 +37,10 @@
 
 这是最简单且最安全的方式，自动配置 MySQL 环境。
 
-1. **下载项目**：
+1. **下载配置文件**：
+   你只需要 `docker-compose.yml` 文件即可。
    ```bash
-   git clone https://github.com/huangzijian888/GeekFaka.git
-   cd GeekFaka
+   wget https://raw.githubusercontent.com/huangzijian888/GeekFaka/main/docker-compose.yml
    ```
 
 2. **配置参数**：
@@ -51,6 +51,13 @@
    docker-compose up -d
    ```
    访问 `http://localhost:3000` 即可开始使用。
+
+### 1Panel / 宝塔面板 部署
+
+1. 在面板中创建一个新的 **“编排” (Compose)**。
+2. 复制 `docker-compose.yml` 的内容进去。
+3. 修改环境变量为你想要的配置。
+4. 点击部署，面板会自动拉取 `huangzijian888/geekfaka:latest` 镜像并启动。
 
 ---
 
