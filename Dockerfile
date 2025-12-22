@@ -34,12 +34,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copy Prisma schema and migrations for runtime deployment
-COPY --from=builder /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 # Copy entrypoint script
-COPY --from=builder /app/docker-entrypoint.sh ./
+COPY --from=builder --chown=nextjs:nodejs /app/docker-entrypoint.sh ./
 
 # Allow entrypoint to write/modify prisma schema
-RUN chown nextjs:nodejs prisma/schema.prisma
+RUN chmod -R 755 prisma
 RUN chmod +x docker-entrypoint.sh
 
 USER nextjs
