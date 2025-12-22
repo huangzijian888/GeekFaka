@@ -7,7 +7,7 @@ export async function GET() {
   // Fetch settings from DB
   const settings = await prisma.systemSetting.findMany({
     where: {
-      key: { in: ["epay_enabled"] } // Add other providers here later
+      key: { in: ["epay_enabled", "epay_channels", "epay_fee"] } 
     }
   });
   
@@ -20,10 +20,21 @@ export async function GET() {
 
   // EPay Check
   if (config.epay_enabled === "true") {
-    // Usually EPay supports both Alipay and WeChat
-    // In a more advanced version, we could have 'epay_channels' config to toggle them individually
-    channels.push({ id: "alipay", name: "支付宝", icon: "wallet", provider: "epay" });
-    channels.push({ id: "wechat", name: "微信支付", icon: "credit-card", provider: "epay" });
+    const fee = parseFloat(config.epay_fee || "0");
+    const enabledSubChannels = (config.epay_channels || "alipay,wxpay").split(",");
+
+    if (enabledSubChannels.includes("alipay")) {
+      channels.push({ id: "alipay", name: "支付宝", icon: "wallet", provider: "epay", fee });
+    }
+    if (enabledSubChannels.includes("wxpay")) {
+      channels.push({ id: "wxpay", name: "微信支付", icon: "credit-card", provider: "epay", fee });
+    }
+    if (enabledSubChannels.includes("qqpay")) {
+      channels.push({ id: "qqpay", name: "QQ钱包", icon: "wallet", provider: "epay", fee });
+    }
+    if (enabledSubChannels.includes("usdt")) {
+      channels.push({ id: "usdt", name: "USDT", icon: "credit-card", provider: "epay", fee });
+    }
   }
 
   return NextResponse.json(channels);

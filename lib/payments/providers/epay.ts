@@ -27,7 +27,8 @@ export class EpayProvider implements PaymentAdapter {
               "epay_sign_type", 
               "epay_public_key", 
               "epay_private_key",
-              "epay_enabled"
+              "epay_enabled",
+              "epay_channels"
             ] 
           }
         }

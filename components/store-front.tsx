@@ -29,8 +29,9 @@ interface Category {
 interface PaymentChannel {
   id: string
   name: string
-  icon: string // 'wallet' | 'credit-card'
+  icon: string 
   provider: string
+  fee?: number
 }
 
 export function StoreFront({ categories }: { categories: Category[] }) {
@@ -40,12 +41,19 @@ export function StoreFront({ categories }: { categories: Category[] }) {
   
   // Payment Channels
   const [channels, setChannels] = useState<PaymentChannel[]>([])
-  const [paymentMethod, setPaymentMethod] = useState("") // Selected channel ID
+  const [paymentMethod, setPaymentMethod] = useState("") 
   
   // Form State
   const [email, setEmail] = useState("")
   const [quantity, setQuantity] = useState(1)
   const [emailError, setEmailError] = useState("")
+
+  // Derived State
+  const selectedChannel = channels.find(c => c.id === paymentMethod)
+  const productTotal = selectedProduct ? Number(selectedProduct.price) * quantity : 0
+  const feePercent = selectedChannel?.fee || 0
+  const feeAmount = productTotal * (feePercent / 100)
+  const finalTotal = productTotal + feeAmount
 
   useEffect(() => {
     fetch("/api/config/payments")
@@ -262,9 +270,20 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                   />
                  </div>
                  <div className="grid gap-2">
-                    <Label>合计金额</Label>
-                    <div className="h-10 flex items-center px-3 rounded-md border border-primary/20 bg-primary/5 text-primary font-bold text-lg">
-                      ¥ {selectedProduct ? (Number(selectedProduct.price) * quantity).toFixed(2) : 0}
+                    <Label>预计支付金额</Label>
+                    <div className="flex flex-col items-end">
+                      <div className="h-10 flex items-center px-3 rounded-md border border-primary/20 bg-primary/5 text-primary font-bold text-lg w-full justify-end">
+                        ¥ {finalTotal.toFixed(2)}
+                      </div>
+                      {feeAmount > 0 ? (
+                        <span className="text-xs text-muted-foreground mt-1">
+                          (商品 ¥{productTotal.toFixed(2)} + 支付渠道手续费 ¥{feeAmount.toFixed(2)})
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground mt-1">
+                          免手续费
+                        </span>
+                      )}
                     </div>
                  </div>
               </div>
@@ -279,8 +298,13 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                       <RadioGroupItem value={channel.id} id={channel.id} className="peer sr-only" />
                       <Label
                         htmlFor={channel.id}
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all relative overflow-hidden"
                       >
+                        {channel.fee && channel.fee > 0 && (
+                          <div className="absolute top-0 right-0 bg-destructive text-white text-[10px] px-1.5 py-0.5 rounded-bl">
+                            +{channel.fee}%
+                          </div>
+                        )}
                         {channel.icon === "wallet" ? (
                           <Wallet className="mb-2 h-6 w-6 text-blue-500" />
                         ) : (

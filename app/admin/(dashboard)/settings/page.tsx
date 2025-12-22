@@ -13,6 +13,15 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
+
+// Define available sub-channels for EPay
+const EPAY_SUB_CHANNELS = [
+  { id: "alipay", label: "支付宝" },
+  { id: "wxpay", label: "微信支付" },
+  { id: "qqpay", label: "QQ钱包" },
+  { id: "usdt", label: "USDT" },
+]
 
 // Define available providers metadata
 const PROVIDERS = [
@@ -174,6 +183,55 @@ export default function SettingsPage() {
                   checked={draftConfig.epay_enabled === "true"}
                   onCheckedChange={(checked) => handleChange("epay_enabled", String(checked))}
                 />
+              </div>
+
+              {/* Sub-channel Selection */}
+              <div className="grid gap-3 border rounded-lg p-4">
+                <Label>支持的支付方式</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  {EPAY_SUB_CHANNELS.map((sub) => {
+                    const currentChannels = (draftConfig.epay_channels || "").split(",").filter(Boolean);
+                    const isChecked = currentChannels.includes(sub.id);
+                    
+                    return (
+                      <div key={sub.id} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`chan-${sub.id}`} 
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            let newChannels;
+                            if (checked) {
+                              newChannels = [...currentChannels, sub.id];
+                            } else {
+                              newChannels = currentChannels.filter(c => c !== sub.id);
+                            }
+                            handleChange("epay_channels", newChannels.join(","));
+                          }}
+                        />
+                        <Label htmlFor={`chan-${sub.id}`} className="font-normal cursor-pointer">
+                          {sub.label}
+                        </Label>
+                      </div>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">勾选您的易支付网关实际支持的支付方式。</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>交易手续费率 (%)</Label>
+                <div className="relative">
+                  <Input 
+                    type="number"
+                    step="0.01"
+                    placeholder="0"
+                    className="pr-8"
+                    value={draftConfig.epay_fee || ""}
+                    onChange={e => handleChange("epay_fee", e.target.value)}
+                  />
+                  <span className="absolute right-3 top-2.5 text-sm text-muted-foreground">%</span>
+                </div>
+                <p className="text-xs text-muted-foreground">用户支付时需额外承担的费率，0 为不收取。例如填 3 代表 3%。</p>
               </div>
 
               <div className="grid gap-2">

@@ -30,9 +30,6 @@ export async function POST(req: Request) {
     }
 
     // 2. Calculate Amount
-    // Use Decimal.mul in real app, here simple float math (be careful in production)
-    // Prisma returns Decimal for price, we need to handle it.
-    // For simplicity in this demo, we convert to number.
     const price = Number(product.price);
     const totalAmount = price * quantity;
 
