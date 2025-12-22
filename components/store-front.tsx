@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ShoppingCart, Loader2, Zap, Package, CreditCard, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
+import ReactMarkdown from "react-markdown"
 
 interface Product {
   id: string
@@ -189,7 +190,7 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                         </Badge>
                       </div>
                       <CardDescription className="line-clamp-2 min-h-[2.5rem] mt-2">
-                        {product.description || "暂无描述"}
+                        {product.description ? product.description.replace(/[#*`_~\[\]]/g, '') : "暂无描述"}
                       </CardDescription>
                     </CardHeader>
                     
@@ -219,45 +220,50 @@ export function StoreFront({ categories }: { categories: Category[] }) {
       </Tabs>
 
       <Dialog open={isBuyOpen} onOpenChange={setIsBuyOpen}>
-        <DialogContent className="sm:max-w-[500px] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="text-xl">确认订单</DialogTitle>
-            <DialogDescription>
-              请核对商品信息并选择支付方式
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-6 py-4">
-            {/* 商品信息卡片 */}
-            <div className="flex items-start gap-4 p-4 rounded-lg bg-secondary/30 border border-border/50">
-              <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                <Package className="h-6 w-6 text-primary" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-medium leading-none">{selectedProduct?.name}</h4>
-                <p className="text-sm text-muted-foreground">
-                  单价: ¥{Number(selectedProduct?.price).toFixed(2)}
-                </p>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden p-0 gap-0">
+          <div className="grid grid-cols-1 md:grid-cols-5 h-full">
+            {/* Left Column: Product Details */}
+            <div className="md:col-span-3 p-6 flex flex-col h-full overflow-y-auto bg-background">
+              <DialogHeader className="mb-4">
+                <DialogTitle className="text-2xl font-bold">{selectedProduct?.name}</DialogTitle>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="text-primary bg-primary/10 border-primary/20">
+                    单价 ¥{Number(selectedProduct?.price).toFixed(2)}
+                  </Badge>
+                  <Badge variant="outline">
+                    库存 {selectedProduct?.stock}
+                  </Badge>
+                </div>
+              </DialogHeader>
+              
+              <div className="flex-1 prose prose-sm dark:prose-invert max-w-none pr-2">
+                 <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-2">商品详情</div>
+                 <ReactMarkdown>{selectedProduct?.description || "暂无详细描述"}</ReactMarkdown>
               </div>
             </div>
 
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email" className={cn(emailError && "text-destructive")}>
-                  接收邮箱 {emailError && <span className="text-xs font-normal ml-2">{emailError}</span>}
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className={cn("bg-background/50", emailError && "border-destructive focus-visible:ring-destructive")}
-                />
-              </div>
+            {/* Right Column: Checkout Form */}
+            <div className="md:col-span-2 bg-muted/30 border-l p-6 flex flex-col gap-6 h-full overflow-y-auto">
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" /> 订单配置
+                </h3>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="email" className={cn(emailError && "text-destructive")}>
+                    接收邮箱 {emailError && <span className="text-xs font-normal ml-2">{emailError}</span>}
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className={cn("bg-background", emailError && "border-destructive focus-visible:ring-destructive")}
+                  />
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="grid gap-2">
+                <div className="grid gap-2">
                   <Label htmlFor="quantity">购买数量</Label>
                   <Input
                     id="quantity"
@@ -266,69 +272,70 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                     max={selectedProduct?.stock}
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
-                    className="bg-background/50"
+                    className="bg-background"
                   />
-                 </div>
-                 <div className="grid gap-2">
-                    <Label>预计支付金额</Label>
-                    <div className="flex flex-col items-end">
-                      <div className="h-10 flex items-center px-3 rounded-md border border-primary/20 bg-primary/5 text-primary font-bold text-lg w-full justify-end">
-                        ¥ {finalTotal.toFixed(2)}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" /> 支付方式
+                </h3>
+                {channels.length > 0 ? (
+                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-1 gap-3">
+                    {channels.map((channel) => (
+                      <div key={channel.id}>
+                        <RadioGroupItem value={channel.id} id={channel.id} className="peer sr-only" />
+                        <Label
+                          htmlFor={channel.id}
+                          className="flex items-center justify-between rounded-md border border-muted bg-background p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all"
+                        >
+                          <div className="flex items-center gap-3">
+                            {channel.icon === "wallet" ? (
+                              <Wallet className="h-5 w-5 text-blue-500" />
+                            ) : (
+                              <CreditCard className="h-5 w-5 text-green-500" />
+                            )}
+                            {channel.name}
+                          </div>
+                          {channel.fee && channel.fee > 0 && (
+                            <Badge variant="destructive" className="text-[10px] h-5 px-1.5">
+                              +{channel.fee}%
+                            </Badge>
+                          )}
+                        </Label>
                       </div>
-                      {feeAmount > 0 ? (
-                        <span className="text-xs text-muted-foreground mt-1">
-                          (商品 ¥{productTotal.toFixed(2)} + 支付渠道手续费 ¥{feeAmount.toFixed(2)})
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground mt-1">
-                          免手续费
-                        </span>
-                      )}
+                    ))}
+                  </RadioGroup>
+                ) : (
+                  <div className="p-3 border border-destructive/50 rounded bg-destructive/10 text-destructive text-xs text-center">
+                    暂无可用支付方式
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-auto pt-6 border-t space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">预计支付</span>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-primary">
+                      ¥{finalTotal.toFixed(2)}
                     </div>
-                 </div>
+                    {feeAmount > 0 && (
+                      <div className="text-xs text-muted-foreground">
+                        含手续费 ¥{feeAmount.toFixed(2)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <Button size="lg" className="w-full font-bold text-lg h-12 shadow-lg shadow-primary/20" onClick={handlePurchase} disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {loading ? "正在处理..." : "立即支付"}
+                </Button>
               </div>
             </div>
-
-            <div className="grid gap-2">
-              <Label>支付方式</Label>
-              {channels.length > 0 ? (
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-2 gap-4">
-                  {channels.map((channel) => (
-                    <div key={channel.id}>
-                      <RadioGroupItem value={channel.id} id={channel.id} className="peer sr-only" />
-                      <Label
-                        htmlFor={channel.id}
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all relative overflow-hidden"
-                      >
-                        {channel.fee && channel.fee > 0 && (
-                          <div className="absolute top-0 right-0 bg-destructive text-white text-[10px] px-1.5 py-0.5 rounded-bl">
-                            +{channel.fee}%
-                          </div>
-                        )}
-                        {channel.icon === "wallet" ? (
-                          <Wallet className="mb-2 h-6 w-6 text-blue-500" />
-                        ) : (
-                          <CreditCard className="mb-2 h-6 w-6 text-green-500" />
-                        )}
-                        {channel.name}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              ) : (
-                <div className="p-4 border border-destructive/50 rounded bg-destructive/10 text-destructive text-sm text-center">
-                  暂无可用支付方式，请联系管理员。
-                </div>
-              )}
-            </div>
           </div>
-
-          <DialogFooter>
-            <Button size="lg" className="w-full font-bold text-lg h-12" onClick={handlePurchase} disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? "正在创建订单..." : "立即支付"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

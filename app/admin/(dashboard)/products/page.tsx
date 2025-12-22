@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { StockManager } from "@/components/admin/stock-manager"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 
 interface Category {
   id: string
@@ -283,67 +284,90 @@ export default function ProductsPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>{editingProduct ? "编辑商品" : "新增商品"}</DialogTitle>
             <DialogDescription>
-              填写商品的基本信息
+              配置商品详情与描述信息
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">商品名称</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
+          
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-1">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+              {/* Left Column: Basic Info */}
+              <div className="md:col-span-1 space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">商品名称</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                    placeholder="例如：Netflix 4K"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="categoryId">所属分类</Label>
+                  <Select 
+                    value={formData.categoryId} 
+                    onValueChange={(val) => setFormData({ ...formData, categoryId: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择分类" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="price">价格 (元)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-muted-foreground">¥</span>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      className="pl-7"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="pt-4">
+                   <p className="text-xs text-muted-foreground leading-relaxed">
+                     提示：<br/>
+                     1. 商品创建后默认为上架状态。<br/>
+                     2. 请在“库存管理”中添加卡密。<br/>
+                     3. 描述支持图片和超链接。
+                   </p>
+                </div>
+              </div>
+
+              {/* Right Column: Rich Text Editor */}
+              <div className="md:col-span-2 flex flex-col gap-2 h-full min-h-[400px]">
+                <Label>详细描述</Label>
+                <div className="flex-1 border rounded-md overflow-hidden bg-background">
+                  <RichTextEditor
+                    value={formData.description}
+                    onChange={(value) => setFormData({ ...formData, description: value })}
+                    placeholder="输入商品的详细说明，支持图片链接、标题排版..."
+                  />
+                </div>
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="categoryId">分类</Label>
-              <Select 
-                value={formData.categoryId} 
-                onValueChange={(val) => setFormData({ ...formData, categoryId: val })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择分类" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="price">价格 (元)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">描述</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={4}
-                placeholder="输入商品的详细说明或使用说明..."
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={submitLoading}>
-                {submitLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                保存
-              </Button>
-            </DialogFooter>
           </form>
+
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>取消</Button>
+            <Button type="submit" onClick={handleSubmit} disabled={submitLoading}>
+              {submitLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              保存商品
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
