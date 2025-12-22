@@ -7,7 +7,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const data = Object.fromEntries(searchParams.entries());
 
-  return processNotification(data);
+  return processNotification(data, req);
 }
 
 export async function POST(req: Request) {
@@ -15,13 +15,15 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const data = Object.fromEntries(formData.entries());
   
-  return processNotification(data);
+  return processNotification(data, req);
 }
 
-async function processNotification(data: any) {
+async function processNotification(data: any, req?: Request) {
   try {
     const adapter = getPaymentAdapter("epay");
-    const callbackData = await adapter.verifyCallback(data);
+    // Pass headers if available, or empty object
+    const headers = req ? Object.fromEntries(req.headers.entries()) : {};
+    const callbackData = await adapter.verifyCallback(data, headers);
 
     if (callbackData.status === "PAID") {
        await prisma.$transaction(async (tx) => {

@@ -156,7 +156,7 @@ export class EpayProvider implements PaymentAdapter {
   }
   
   // ... (verifyCallback unchanged except loadConfig call)
-  async verifyCallback(data: any): Promise<PaymentCallbackData> {
+  async verifyCallback(data: any, headers?: any): Promise<PaymentCallbackData> {
     await this.loadConfig();
     
     if (!this.isEnabled) throw new Error("Payment channel disabled");
