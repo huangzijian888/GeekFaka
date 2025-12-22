@@ -18,7 +18,11 @@ export async function POST(req: Request) {
   try {
     const { name, slug, priority = 0 } = await req.json();
     const category = await prisma.category.create({
-      data: { name, slug, priority }
+      data: { 
+        name, 
+        slug, 
+        priority: Number(priority) 
+      }
     });
     return NextResponse.json(category);
   } catch (error) {
