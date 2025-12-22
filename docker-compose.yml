@@ -3,26 +3,15 @@ version: '3'
 services:
   geekfaka:
     container_name: geekfaka-app
-    # 使用官方构建好的镜像 (推荐)
     image: huangzijian888/geekfaka:latest
-    # 如果想手动构建，请取消下面两行的注释，并注释掉 image 行
-    # build: .
     restart: always
     ports:
       - "3000:3000"
     environment:
-      # 【关键配置】数据库连接地址
-      # 格式: mysql://用户名:密码@数据库主机:端口/数据库名
-      # 注意：这里的 'mysql' 必须对应下方 mysql 服务的名称
-      - DATABASE_URL=mysql://geekfaka_user:your_password_here@mysql:3306/geekfaka
-      
-      # 【关键配置】站点公开访问地址，用于支付回调（必须包含 http/https）
-      - NEXT_PUBLIC_URL=http://localhost:3000
-      
-      # 后台管理员登录密码
-      - ADMIN_PASSWORD=admin
-      # Cookie 名称 (可选修改)
-      - COOKIE_NAME=geekfaka_session
+      DATABASE_URL: "mysql://geekfaka_user:your_password_here@mysql:3306/geekfaka"
+      NEXT_PUBLIC_URL: "http://localhost:3000"
+      ADMIN_PASSWORD: "admin"
+      COOKIE_NAME: "geekfaka_session"
     depends_on:
       - mysql
 
@@ -31,18 +20,12 @@ services:
     container_name: geekfaka-mysql
     restart: always
     environment:
-      # root 用户的密码 (生产环境请务必修改)
-      - MYSQL_ROOT_PASSWORD=geekfaka_root_secret
-      # 创建的业务数据库名称
-      - MYSQL_DATABASE=geekfaka
-      # 创建的业务用户名
-      - MYSQL_USER=geekfaka_user
-      # 创建的业务用户密码 (请务必修改)
-      - MYSQL_PASSWORD=your_password_here
+      MYSQL_ROOT_PASSWORD: "geekfaka_root_secret"
+      MYSQL_DATABASE: "geekfaka"
+      MYSQL_USER: "geekfaka_user"
+      MYSQL_PASSWORD: "your_password_here"
     ports:
       - "3306:3306"
     volumes:
-      # 数据库持久化存储
       - ./mysql_data:/var/lib/mysql
-    # 使用较旧的认证插件以兼容某些 Prisma 版本/Node 环境
     command: --default-authentication-plugin=mysql_native_password
