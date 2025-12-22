@@ -18,7 +18,7 @@ done
 echo "✅ Database is up! Syncing schema..."
 # Use db push instead of migrate deploy because we switched providers dynamically
 # and don't have native MySQL migration files pre-generated.
-prisma db push --accept-data-loss
+prisma db push --accept-data-loss --skip-generate
 
 # 3. 启动 Next.js 服务
 echo "✅ Starting Next.js server..."
