@@ -37,7 +37,7 @@ export default async function AdminLayout({
   // app/admin/login/page.tsx -> Login Page (No Sidebar, Public)
   
   return (
-    <div className="flex min-h-screen flex-col md:flex-row bg-muted/20">
+    <div className="flex min-h-screen flex-col md:flex-row bg-background dark text-foreground">
       {/* Mobile Sidebar could be added here */}
       
       {/* Desktop Sidebar */}
