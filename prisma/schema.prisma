@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  priority  Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  licenses    License[]
+  orders      Order[]
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model License {
+  id          String   @id @default(cuid())
+  code        String   // The actual card content/key
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  status      String   @default("AVAILABLE") // AVAILABLE, SOLD, LOCKED
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id            String    @id @default(cuid())
+  orderNo       String    @unique // Readable order number
+  email         String?   // Contact info
+  totalAmount   Decimal
+  status        String    @default("PENDING") // PENDING, PAID, FAILED, EXPIRED
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id])
+  quantity      Int       @default(1)
+  licenses      License[]
+  paymentMethod String?
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
