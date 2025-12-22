@@ -32,6 +32,17 @@ async function processNotification(data: any) {
         if (!order) throw new Error("Order not found");
         if (order.status === "PAID") return; // Idempotency
 
+        // Check for expiration (30 mins)
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+        if (order.createdAt < thirtyMinutesAgo) {
+          console.warn(`Order ${order.orderNo} payment received but expired.`);
+          await tx.order.update({
+            where: { id: order.id },
+            data: { status: "EXPIRED" } // Or "PAID_EXPIRED" for manual refund
+          });
+          return;
+        }
+
         // Allocate licenses
         const licenses = await tx.license.findMany({
           where: { 

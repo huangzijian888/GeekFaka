@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Order {
   id: string
@@ -23,21 +24,52 @@ interface Order {
   }
 }
 
+interface Product {
+  id: string
+  name: string
+}
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState("ALL")
+  const [productFilter, setProductFilter] = useState("ALL")
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrders()
+    fetchProducts()
   }, [])
+
+  // Refetch when filters change
+  useEffect(() => {
+    fetchOrders()
+  }, [statusFilter, productFilter])
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch("/api/admin/products")
+      const data = await res.json()
+      setProducts(data)
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const fetchOrders = async (query?: string) => {
     setLoading(true)
     try {
-      const url = query ? `/api/admin/orders?search=${query}` : "/api/admin/orders"
-      const res = await fetch(url)
+      // Use current search state if query not provided
+      const searchQuery = query !== undefined ? query : search
+      
+      const params = new URLSearchParams()
+      if (searchQuery) params.set("search", searchQuery)
+      if (statusFilter !== "ALL") params.set("status", statusFilter)
+      if (productFilter !== "ALL") params.set("productId", productFilter)
+
+      const res = await fetch(`/api/admin/orders?${params.toString()}`)
       const data = await res.json()
       setOrders(data)
     } catch (error) {
@@ -99,7 +131,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-center gap-4">
         <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-sm">
           <Input 
             placeholder="搜索订单号或邮箱..." 
@@ -111,6 +143,32 @@ export default function OrdersPage() {
             <Search className="h-4 w-4" />
           </Button>
         </form>
+
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[140px] bg-background/50">
+              <SelectValue placeholder="全部状态" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">全部状态</SelectItem>
+              <SelectItem value="PAID">已支付</SelectItem>
+              <SelectItem value="PENDING">待支付</SelectItem>
+              <SelectItem value="FAILED">失败/过期</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={productFilter} onValueChange={setProductFilter}>
+            <SelectTrigger className="w-[180px] bg-background/50">
+              <SelectValue placeholder="全部商品" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">全部商品</SelectItem>
+              {products.map(p => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="rounded-md border bg-card text-white">
