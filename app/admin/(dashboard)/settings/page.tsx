@@ -73,15 +73,27 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
+      // Prepare payload: remove empty password
+      const payload = { ...draftConfig }
+      if (!payload.admin_password) {
+        delete payload.admin_password
+      }
+
       const res = await fetch("/api/admin/settings", {
         method: "POST",
-        body: JSON.stringify(draftConfig),
+        body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" }
       })
+      
       if (res.ok) {
         alert("设置已保存")
-        setConfig(draftConfig) // Update view with saved values
-        setSelectedProvider(null) // Close dialog
+        // Clear password field from draft after save for security
+        const newDraft = { ...draftConfig }
+        delete newDraft.admin_password
+        setDraftConfig(newDraft)
+        
+        setConfig(newDraft) 
+        setSelectedProvider(null) 
       } else {
         alert("保存失败")
       }
@@ -173,6 +185,20 @@ export default function SettingsPage() {
                 />
                 <p className="text-xs text-muted-foreground">
                   必须配置正确的域名（包含 https://），否则支付后无法自动发货。
+                </p>
+              </div>
+              
+              <div className="grid gap-2 pt-4 border-t">
+                <Label>修改管理员密码</Label>
+                <Input 
+                  type="password"
+                  value={draftConfig.admin_password || ""}
+                  onChange={e => handleChange("admin_password", e.target.value)}
+                  placeholder="留空则不修改"
+                  autoComplete="new-password"
+                />
+                <p className="text-xs text-muted-foreground">
+                  设置新密码后，下次登录生效。若留空则保持当前密码不变。
                 </p>
               </div>
             </CardContent>

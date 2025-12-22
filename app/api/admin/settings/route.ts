@@ -8,7 +8,10 @@ export async function GET() {
   const settings = await prisma.systemSetting.findMany();
   // Convert array to object
   const config = settings.reduce((acc, curr) => {
-    acc[curr.key] = curr.value;
+    // Don't expose sensitive password
+    if (curr.key !== "admin_password") {
+      acc[curr.key] = curr.value;
+    }
     return acc;
   }, {} as Record<string, string>);
 
