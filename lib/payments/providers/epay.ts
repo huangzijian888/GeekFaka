@@ -1,24 +1,78 @@
 import { PaymentAdapter, PaymentIntent, PaymentStatus, PaymentCallbackData } from "../types";
 import crypto from "crypto";
+import { prisma } from "@/lib/prisma";
 
 export class EpayProvider implements PaymentAdapter {
   name = "epay";
 
-  private signType: "MD5" | "RSA";
-  private publicKey: string;
-  private privateKey: string;
+  private apiUrl: string = "";
+  private pid: string = "";
+  private key: string = "";
+  private signType: "MD5" | "RSA" = "MD5";
+  private publicKey: string = "";
+  private privateKey: string = "";
+  private isEnabled: boolean = false;
 
-  constructor() {
-    this.apiUrl = process.env.EPAY_API_URL || "";
-    this.pid = process.env.EPAY_PID || "";
-    this.key = process.env.EPAY_KEY || "";
-    this.signType = (process.env.EPAY_SIGN_TYPE as "MD5" | "RSA") || "MD5";
-    this.publicKey = process.env.EPAY_PUBLIC_KEY || "";
-    this.privateKey = process.env.EPAY_PRIVATE_KEY || "";
+  constructor() {}
 
-    // Ensure API URL ends with slash
-    if (this.apiUrl && !this.apiUrl.endsWith("/")) {
-      this.apiUrl += "/";
+  private async loadConfig() {
+    try {
+      const settings = await prisma.systemSetting.findMany({
+        where: {
+          key: {
+            in: [
+              "epay_api_url", 
+              "epay_pid", 
+              "epay_key", 
+              "epay_sign_type", 
+              "epay_public_key", 
+              "epay_private_key",
+              "epay_enabled"
+            ] 
+          }
+        }
+      });
+      
+      const config = settings.reduce((acc, curr) => {
+        acc[curr.key] = curr.value;
+        return acc;
+      }, {} as Record<string, string>);
+
+      this.isEnabled = config.epay_enabled === "true";
+      this.apiUrl = config.epay_api_url || "";
+      this.pid = config.epay_pid || "";
+      this.key = config.epay_key || "";
+      this.signType = (config.epay_sign_type as "MD5" | "RSA") || "MD5";
+      this.publicKey = config.epay_public_key || "";
+      this.privateKey = config.epay_private_key || "";
+
+      if (this.apiUrl && !this.apiUrl.endsWith("/")) {
+        this.apiUrl += "/";
+      }
+
+    } catch (e) {
+      console.error("Critical: Failed to load payment config from DB", e);
+      throw new Error("Payment configuration database error");
+    }
+  }
+
+  private formatKey(key: string, type: "PUBLIC" | "PRIVATE"): string {
+    if (!key) return "";
+    
+    let raw = key
+      .replace(/-----BEGIN (RSA )?(PUBLIC|PRIVATE) KEY-----/g, "")
+      .replace(/-----END (RSA )?(PUBLIC|PRIVATE) KEY-----/g, "")
+      .replace(/[\s\r\n]/g, "");
+
+    const chunks = raw.match(/.{1,64}/g);
+    if (!chunks) return key;
+
+    const body = chunks.join("\n");
+    
+    if (type === "PRIVATE") {
+       return `-----BEGIN RSA PRIVATE KEY-----\n${body}\n-----END RSA PRIVATE KEY-----`;
+    } else {
+       return `-----BEGIN PUBLIC KEY-----\n${body}\n-----END PUBLIC KEY-----`;
     }
   }
 
@@ -30,44 +84,17 @@ export class EpayProvider implements PaymentAdapter {
       .join("&");
   }
 
-  private formatKey(key: string, type: "PUBLIC" | "PRIVATE"): string {
-    // 1. Remove existing headers/footers/whitespace to get raw body
-    let raw = key
-      .replace(/-----BEGIN (RSA )?(PUBLIC|PRIVATE) KEY-----/g, "")
-      .replace(/-----END (RSA )?(PUBLIC|PRIVATE) KEY-----/g, "")
-      .replace(/[\s\r\n]/g, "");
-
-    // 2. Chunk into 64-char lines
-    const chunks = raw.match(/.{1,64}/g);
-    if (!chunks) return key; // Should not happen if key is valid
-
-    const body = chunks.join("\n");
-    
-    // 3. Add correct headers back
-    if (type === "PRIVATE") {
-       // Check if it was RSA or generic PRIVATE KEY. 
-       // Most EPay use PKCS#1 (RSA PRIVATE KEY), but Node.js is flexible if wrapped correctly.
-       // We'll use the generic PRIVATE KEY header as it's safer for PKCS#8, 
-       // but if it fails, users might need to convert. 
-       // Let's try to infer or default to standard "RSA PRIVATE KEY" which is common in PHP worlds.
-       return `-----BEGIN RSA PRIVATE KEY-----\n${body}\n-----END RSA PRIVATE KEY-----`;
-    } else {
-       return `-----BEGIN PUBLIC KEY-----\n${body}\n-----END PUBLIC KEY-----`;
-    }
-  }
-
   private sign(params: Record<string, string>): string {
     const paramStr = this.getParamString(params);
     
     if (this.signType === "RSA") {
-      if (!this.privateKey) throw new Error("Missing EPAY_PRIVATE_KEY for RSA signing");
-      
+      if (!this.privateKey) throw new Error("RSA Private Key is not configured in settings");
       const formattedKey = this.formatKey(this.privateKey, "PRIVATE");
       const sign = crypto.createSign("RSA-SHA256");
       sign.update(paramStr);
       return sign.sign(formattedKey, "base64");
     } else {
-      // MD5 Default
+      if (!this.key) throw new Error("MD5 Key is not configured in settings");
       const signStr = `${paramStr}${this.key}`;
       return crypto.createHash("md5").update(signStr).digest("hex");
     }
@@ -79,8 +106,14 @@ export class EpayProvider implements PaymentAdapter {
     description: string,
     options?: { channel?: string }
   ): Promise<PaymentIntent> {
+    await this.loadConfig();
+
+    if (!this.isEnabled) {
+      throw new Error("易支付渠道目前已停用，请在后台开启");
+    }
+
     if (!this.apiUrl || !this.pid) {
-      throw new Error("EPay configuration missing");
+      throw new Error("易支付参数未配置，请在后台设置");
     }
 
     const type = options?.channel || "alipay"; 
@@ -112,27 +145,28 @@ export class EpayProvider implements PaymentAdapter {
   }
 
   async verifyCallback(data: any): Promise<PaymentCallbackData> {
+    await this.loadConfig();
+    
+    if (!this.isEnabled) throw new Error("Payment channel disabled");
+
     const { sign, sign_type, ...params } = data;
     
     if (!sign) throw new Error("Missing signature");
 
-    // Use RSA verification if current config is RSA, or if callback explicitly says RSA
-    // Note: Some gateways return sign_type, some don't. We trust our config first.
     const isRSA = this.signType === "RSA" || sign_type === "RSA";
 
     if (isRSA) {
-       if (!this.publicKey) throw new Error("Missing EPAY_PUBLIC_KEY for RSA verification");
-       
+       if (!this.publicKey) throw new Error("RSA Public Key missing in settings");
        const formattedKey = this.formatKey(this.publicKey, "PUBLIC");
        const verify = crypto.createVerify("RSA-SHA256");
        verify.update(this.getParamString(params as Record<string, string>));
        if (!verify.verify(formattedKey, sign, "base64")) {
-         throw new Error("Invalid RSA signature");
+         throw new Error("Invalid RSA signature from callback");
        }
     } else {
        const calculatedSign = this.sign(params as Record<string, string>);
        if (calculatedSign !== sign) {
-         throw new Error("Invalid MD5 signature");
+         throw new Error("Invalid MD5 signature from callback");
        }
     }
 

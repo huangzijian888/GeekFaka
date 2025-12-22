@@ -26,16 +26,36 @@ interface Category {
   products: Product[]
 }
 
+interface PaymentChannel {
+  id: string
+  name: string
+  icon: string // 'wallet' | 'credit-card'
+  provider: string
+}
+
 export function StoreFront({ categories }: { categories: Category[] }) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isBuyOpen, setIsBuyOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   
+  // Payment Channels
+  const [channels, setChannels] = useState<PaymentChannel[]>([])
+  const [paymentMethod, setPaymentMethod] = useState("") // Selected channel ID
+  
   // Form State
   const [email, setEmail] = useState("")
   const [quantity, setQuantity] = useState(1)
-  const [paymentMethod, setPaymentMethod] = useState("alipay")
   const [emailError, setEmailError] = useState("")
+
+  useEffect(() => {
+    fetch("/api/config/payments")
+      .then(res => res.json())
+      .then(data => {
+        setChannels(data)
+        if (data.length > 0) setPaymentMethod(data[0].id)
+      })
+      .catch(console.error)
+  }, [])
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -62,25 +82,28 @@ export function StoreFront({ categories }: { categories: Category[] }) {
       setEmailError("请输入有效的邮箱地址，用于接收卡密")
       return
     }
+    
+    if (!paymentMethod) {
+      alert("请选择支付方式")
+      return
+    }
+
     setEmailError("")
     setLoading(true)
 
     try {
-      // Use 'epay' provider but specify the channel (alipay/wxpay)
-      // This allows the EPay provider to set 'type=alipay' or 'type=wxpay'
+      // Find the provider for the selected channel
+      const selectedChannel = channels.find(c => c.id === paymentMethod)
+      const providerName = selectedChannel?.provider || "dummy"
+
       const payload = {
         productId: selectedProduct.id,
         quantity,
         email,
-        paymentMethod: "epay", 
+        paymentMethod: providerName, 
         options: {
-          channel: paymentMethod // 'alipay' or 'wechat' (mapped to 'wxpay' if needed)
+          channel: paymentMethod === "wechat" ? "wxpay" : paymentMethod 
         }
-      }
-      
-      // Small fix: 'wechat' in UI radio group should map to 'wxpay' for most EPay gateways
-      if (paymentMethod === "wechat") {
-        payload.options.channel = "wxpay";
       }
 
       const res = await fetch("/api/orders/create", {
@@ -249,28 +272,30 @@ export function StoreFront({ categories }: { categories: Category[] }) {
 
             <div className="grid gap-2">
               <Label>支付方式</Label>
-              <RadioGroup defaultValue="alipay" onValueChange={setPaymentMethod} className="grid grid-cols-2 gap-4">
-                <div>
-                  <RadioGroupItem value="alipay" id="alipay" className="peer sr-only" />
-                  <Label
-                    htmlFor="alipay"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all"
-                  >
-                    <Wallet className="mb-2 h-6 w-6 text-blue-500" />
-                    支付宝
-                  </Label>
+              {channels.length > 0 ? (
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-2 gap-4">
+                  {channels.map((channel) => (
+                    <div key={channel.id}>
+                      <RadioGroupItem value={channel.id} id={channel.id} className="peer sr-only" />
+                      <Label
+                        htmlFor={channel.id}
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all"
+                      >
+                        {channel.icon === "wallet" ? (
+                          <Wallet className="mb-2 h-6 w-6 text-blue-500" />
+                        ) : (
+                          <CreditCard className="mb-2 h-6 w-6 text-green-500" />
+                        )}
+                        {channel.name}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              ) : (
+                <div className="p-4 border border-destructive/50 rounded bg-destructive/10 text-destructive text-sm text-center">
+                  暂无可用支付方式，请联系管理员。
                 </div>
-                <div>
-                  <RadioGroupItem value="wechat" id="wechat" className="peer sr-only" />
-                  <Label
-                    htmlFor="wechat"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all"
-                  >
-                    <CreditCard className="mb-2 h-6 w-6 text-green-500" />
-                    微信支付
-                  </Label>
-                </div>
-              </RadioGroup>
+              )}
             </div>
           </div>
 

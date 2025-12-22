@@ -17,6 +17,13 @@ model User {
   createdAt DateTime @default(now())
 }
 
+model SystemSetting {
+  key         String   @id
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
 model Category {
   id        String    @id @default(cuid())
   name      String
