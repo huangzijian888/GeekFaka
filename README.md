@@ -4,17 +4,23 @@
 
 ## 📸 界面预览
 
-| 前台首页 (Dark Mode) | 沉浸式购买弹窗 |
-| :---: | :---: |
-| ![Index](images/index.png) | ![Checkout](images/buy.png) |
+### 前台首页 (Dark Mode)
+![Index](images/index.png)
 
-| 商品管理 (Markdown编辑器) | 系统设置 (在线配置) |
-| :---: | :---: |
-| ![Product Edit](images/Product-2.png) | ![Settings](images/Setting.png) |
+### 沉浸式购买弹窗
+![Checkout](images/buy.png)
 
-| 商品列表 | 订单查询 |
-| :---: | :---: |
-| ![Product List](images/Product.png) | ![Orders](images/order.png) |
+### 商品管理 (Markdown编辑器)
+![Product Edit](images/Product-2.png)
+
+### 系统设置 (在线配置)
+![Settings](images/Setting.png)
+
+### 商品列表
+![Product List](images/Product.png)
+
+### 订单查询
+![Orders](images/order.png)
 
 ## ✨ 核心特性
 
