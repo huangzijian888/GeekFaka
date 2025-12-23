@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 const COOKIE_NAME = process.env.COOKIE_NAME || "geekfaka_admin_session";
+const log = logger.child({ module: 'Auth' });
 
 export async function isAuthenticated() {
   const cookieStore = cookies();
@@ -19,19 +21,22 @@ export async function login(password: string) {
 
   if (password === validPassword) {
     const cookieStore = cookies();
-    // Set cookie for 24 hours
     cookieStore.set(COOKIE_NAME, "true", { 
       httpOnly: true, 
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24,
       path: "/"
     });
+    log.info("Admin login successful");
     return true;
   }
+  
+  log.warn("Admin login failed: Invalid password");
   return false;
 }
 
 export async function logout() {
   const cookieStore = cookies();
   cookieStore.delete(COOKIE_NAME);
+  log.info("Admin logout");
 }

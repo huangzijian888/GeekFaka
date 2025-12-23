@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ module: 'AdminProduct' });
 
 // List Products
 export async function GET() {
@@ -34,9 +37,11 @@ export async function POST(req: Request) {
         categoryId,
       }
     });
-
+    
+    log.info({ productId: product.id, name }, "Product created");
     return NextResponse.json(product);
   } catch (error) {
+    log.error({ err: error }, "Failed to create product");
     return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
   }
 }

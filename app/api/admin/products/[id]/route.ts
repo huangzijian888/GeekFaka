@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ module: 'AdminProduct' });
 
 // Update Product
 export async function PATCH(
@@ -23,9 +26,11 @@ export async function PATCH(
         isActive,
       }
     });
-
+    
+    log.info({ productId: id, changes: { name, price, isActive } }, "Product updated");
     return NextResponse.json(product);
   } catch (error) {
+    log.error({ err: error, productId: params.id }, "Failed to update product");
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   }
 }
@@ -40,16 +45,14 @@ export async function DELETE(
   try {
     const { id } = params;
     
-    // Check if there are orders or licenses?
-    // In a real app, you might want to prevent deletion if there are paid orders.
-    // For now, we delete (licenses will be deleted if configured or cause error).
-    
     await prisma.product.delete({
       where: { id }
     });
-
+    
+    log.info({ productId: id }, "Product deleted");
     return NextResponse.json({ success: true });
   } catch (error) {
+    log.error({ err: error, productId: params.id }, "Failed to delete product");
     return NextResponse.json({ error: "Failed to delete product. Make sure to delete licenses first." }, { status: 500 });
   }
 }

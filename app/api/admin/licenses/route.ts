@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ module: 'AdminLicense' });
 
 // List Licenses for a Product
 export async function GET(req: Request) {
+// ... (omitted for brevity, read only)
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
   const { searchParams } = new URL(req.url);
@@ -51,9 +55,12 @@ export async function POST(req: Request) {
     const result = await prisma.license.createMany({
       data
     });
+    
+    log.info({ productId, count: result.count }, "Licenses imported");
 
     return NextResponse.json({ count: result.count });
   } catch (error) {
+    log.error({ err: error, productId }, "Failed to import licenses");
     return NextResponse.json({ error: "Failed to import licenses" }, { status: 500 });
   }
 }

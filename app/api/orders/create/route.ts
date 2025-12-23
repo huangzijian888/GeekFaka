@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPaymentAdapter } from "@/lib/payments/registry";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ module: 'OrderCreate' });
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { productId, quantity = 1, email, paymentMethod = "epay", options } = body;
+
+    log.info({ productId, quantity, email, paymentMethod }, "Order creation attempt");
 
     if (!productId || !email) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -22,10 +27,12 @@ export async function POST(req: Request) {
     });
 
     if (!product) {
+      log.warn({ productId }, "Product not found");
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     if (product._count.licenses < quantity) {
+      log.warn({ productId, requested: quantity, available: product._count.licenses }, "Insufficient stock");
       return NextResponse.json({ error: "Insufficient stock" }, { status: 400 });
     }
 
@@ -48,6 +55,8 @@ export async function POST(req: Request) {
         status: "PENDING",
       }
     });
+    
+    log.info({ orderNo, totalAmount }, "Order created in DB");
 
     // 4. Initiate Payment
     try {
@@ -58,6 +67,8 @@ export async function POST(req: Request) {
         `${product.name} x${quantity}`,
         options
       );
+      
+      log.info({ orderNo, payUrl: paymentIntent.payUrl }, "Payment initiated");
 
       return NextResponse.json({ 
         success: true, 
@@ -67,12 +78,12 @@ export async function POST(req: Request) {
       });
 
     } catch (payError: any) {
-      console.error("Payment init failed:", payError);
+      log.error({ err: payError, orderNo }, "Payment initiation failed");
       return NextResponse.json({ error: "Payment initialization failed: " + payError.message }, { status: 500 });
     }
 
   } catch (error) {
-    console.error("Order create error:", error);
+    log.error({ err: error }, "Order create error");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

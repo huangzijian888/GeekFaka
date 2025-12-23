@@ -1,6 +1,9 @@
 import { PaymentAdapter, PaymentIntent, PaymentStatus, PaymentCallbackData } from "../types";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ module: 'EPayProvider' });
 
 export class EpayProvider implements PaymentAdapter {
   name = "epay";
@@ -49,9 +52,7 @@ export class EpayProvider implements PaymentAdapter {
       this.publicKey = config.epay_public_key || "";
       this.privateKey = config.epay_private_key || "";
       
-      // Fallback logic for site URL
       let url = config.site_url || process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
-      // Remove trailing slash if present
       if (url.endsWith("/")) url = url.slice(0, -1);
       this.siteUrl = url;
 
@@ -60,12 +61,10 @@ export class EpayProvider implements PaymentAdapter {
       }
 
     } catch (e) {
-      console.error("Critical: Failed to load payment config from DB", e);
+      log.error({ err: e }, "Failed to load payment config from DB");
       throw new Error("Payment configuration database error");
     }
   }
-
-  // ... (formatKey, getParamString, sign methods unchanged) ...
 
   private formatKey(key: string, type: "PUBLIC" | "PRIVATE"): string {
     if (!key) return "";
@@ -95,20 +94,23 @@ export class EpayProvider implements PaymentAdapter {
       .join("&");
   }
 
-  private sign(params: Record<string, string>): string {
+  private signMD5(params: Record<string, string>): string {
     const paramStr = this.getParamString(params);
-    
-    if (this.signType === "RSA") {
-      if (!this.privateKey) throw new Error("RSA Private Key is not configured in settings");
-      const formattedKey = this.formatKey(this.privateKey, "PRIVATE");
-      const sign = crypto.createSign("RSA-SHA256");
-      sign.update(paramStr);
-      return sign.sign(formattedKey, "base64");
-    } else {
-      if (!this.key) throw new Error("MD5 Key is not configured in settings");
-      const signStr = `${paramStr}${this.key}`;
-      return crypto.createHash("md5").update(signStr).digest("hex");
-    }
+    const signStr = `${paramStr}${this.key}`;
+    return crypto.createHash("md5").update(signStr).digest("hex");
+  }
+
+  private signRSA(params: Record<string, string>): string {
+    const paramStr = this.getParamString(params);
+    if (!this.privateKey) throw new Error("RSA Private Key is not configured");
+    const formattedKey = this.formatKey(this.privateKey, "PRIVATE");
+    const sign = crypto.createSign("RSA-SHA256");
+    sign.update(paramStr);
+    return sign.sign(formattedKey, "base64");
+  }
+
+  private sign(params: Record<string, string>): string {
+    return this.signType === "RSA" ? this.signRSA(params) : this.signMD5(params);
   }
 
   async createPayment(
@@ -147,6 +149,8 @@ export class EpayProvider implements PaymentAdapter {
     const queryString = new URLSearchParams({ ...params, sign: signature }).toString();
     const payUrl = `${this.apiUrl}submit.php?${queryString}`;
 
+    log.info({ orderNo, amount, type, signType: this.signType }, "Payment URL generated");
+
     return {
       orderId: orderNo,
       amount: amount,
@@ -154,34 +158,42 @@ export class EpayProvider implements PaymentAdapter {
       payUrl: payUrl
     };
   }
-  
-  // ... (verifyCallback unchanged except loadConfig call)
+
   async verifyCallback(data: any, headers?: any): Promise<PaymentCallbackData> {
     await this.loadConfig();
     
-    if (!this.isEnabled) throw new Error("Payment channel disabled");
+    if (!this.isEnabled) {
+        log.warn("Received callback but payment channel is disabled");
+        throw new Error("Payment channel disabled");
+    }
 
     const { sign, sign_type, ...params } = data;
     
     if (!sign) throw new Error("Missing signature");
 
-    const isRSA = this.signType === "RSA" || sign_type === "RSA";
+    const incomingSignType = (sign_type || this.signType).toUpperCase();
 
-    if (isRSA) {
+    log.info({ incomingSignType, sign }, "Verifying callback signature");
+
+    if (incomingSignType === "RSA") {
        if (!this.publicKey) throw new Error("RSA Public Key missing in settings");
-       
        const formattedKey = this.formatKey(this.publicKey, "PUBLIC");
        const verify = crypto.createVerify("RSA-SHA256");
        verify.update(this.getParamString(params as Record<string, string>));
        if (!verify.verify(formattedKey, sign, "base64")) {
+         log.error("RSA Signature verification failed");
          throw new Error("Invalid RSA signature from callback");
        }
     } else {
-       const calculatedSign = this.sign(params as Record<string, string>);
+       if (!this.key) throw new Error("MD5 Key missing in settings");
+       const calculatedSign = this.signMD5(params as Record<string, string>);
        if (calculatedSign !== sign) {
+         log.error({ calculated: calculatedSign, received: sign }, "MD5 Signature verification failed");
          throw new Error("Invalid MD5 signature from callback");
        }
     }
+    
+    log.info("Signature verified successfully");
 
     const status = params.trade_status === "TRADE_SUCCESS" ? PaymentStatus.PAID : PaymentStatus.FAILED;
 
