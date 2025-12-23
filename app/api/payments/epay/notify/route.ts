@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPaymentAdapter } from "@/lib/payments/registry";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   // EPay notifications are usually GET requests, but verify based on your gateway
@@ -19,11 +20,16 @@ export async function POST(req: Request) {
 }
 
 async function processNotification(data: any, req?: Request) {
+  const log = logger.child({ module: 'EPayNotify', orderNo: data.out_trade_no });
+  log.info({ data }, "Received payment callback");
+
   try {
     const adapter = getPaymentAdapter("epay");
     // Pass headers if available, or empty object
     const headers = req ? Object.fromEntries(req.headers.entries()) : {};
     const callbackData = await adapter.verifyCallback(data, headers);
+    
+    log.info({ callbackData }, "Signature verified");
 
     if (callbackData.status === "PAID") {
        await prisma.$transaction(async (tx) => {
@@ -31,16 +37,23 @@ async function processNotification(data: any, req?: Request) {
           where: { orderNo: callbackData.orderNo },
         });
 
-        if (!order) throw new Error("Order not found");
-        if (order.status === "PAID") return; // Idempotency
+        if (!order) {
+            log.error("Order not found");
+            throw new Error("Order not found");
+        }
+        
+        if (order.status === "PAID") {
+            log.info("Order already paid, skipping idempotency check");
+            return; 
+        }
 
         // Check for expiration (30 mins)
         const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
         if (order.createdAt < thirtyMinutesAgo) {
-          console.warn(`Order ${order.orderNo} payment received but expired.`);
+          log.warn("Payment received for expired order");
           await tx.order.update({
             where: { id: order.id },
-            data: { status: "EXPIRED" } // Or "PAID_EXPIRED" for manual refund
+            data: { status: "EXPIRED" }
           });
           return;
         }
@@ -55,8 +68,10 @@ async function processNotification(data: any, req?: Request) {
         });
 
         if (licenses.length < order.quantity) {
-          // Log error: Stock insufficient despite payment
-          console.error(`Order ${order.orderNo} paid but insufficient stock!`);
+          log.error({
+            needed: order.quantity,
+            found: licenses.length
+          }, "Insufficient stock for paid order");
           // Could update status to "PAID_NO_STOCK" or handle refund manually
           return; 
         }
@@ -75,12 +90,13 @@ async function processNotification(data: any, req?: Request) {
             paidAt: new Date()
           }
         });
+        log.info("Order successfully fulfilled");
       });
     }
 
     return new NextResponse("success");
   } catch (error) {
-    console.error("EPay Notify Error:", error);
+    logger.error({ err: error }, "Payment notification processing failed");
     return new NextResponse("fail", { status: 400 });
   }
 }
