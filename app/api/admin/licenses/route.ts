@@ -33,8 +33,12 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
+  let productId = "";
+
   try {
-    const { productId, codes } = await req.json(); // codes is an array of strings
+    const body = await req.json();
+    productId = body.productId;
+    const { codes } = body;
 
     if (!productId || !Array.isArray(codes)) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
