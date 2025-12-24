@@ -16,15 +16,23 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const crispId = await prisma.systemSetting.findUnique({
-    where: { key: "crisp_id" },
-  });
+  let crispId = undefined;
+  try {
+    const setting = await prisma.systemSetting.findUnique({
+      where: { key: "crisp_id" },
+    });
+    crispId = setting?.value;
+  } catch (error) {
+    // Suppress errors during build time or if DB is unreachable
+    // This allows the build to pass even if DATABASE_URL is missing in the build environment
+    console.warn("Failed to fetch crisp_id (likely during build):", error);
+  }
 
   return (
     <html lang="en">
       <body className={inter.className}>
         {children}
-        <CustomerService crispId={crispId?.value} />
+        <CustomerService crispId={crispId} />
       </body>
     </html>
   );

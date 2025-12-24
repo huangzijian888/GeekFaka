@@ -6,23 +6,30 @@ import ReactMarkdown from "react-markdown";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const categoriesData = await prisma.category.findMany({
-    orderBy: { priority: "desc" },
-    include: {
-      products: {
-        where: { isActive: true },
-        include: {
-          _count: {
-            select: { licenses: { where: { status: "AVAILABLE" } } }
+  let categoriesData = [];
+  let contactInfo = null;
+
+  try {
+    categoriesData = await prisma.category.findMany({
+      orderBy: { priority: "desc" },
+      include: {
+        products: {
+          where: { isActive: true },
+          include: {
+            _count: {
+              select: { licenses: { where: { status: "AVAILABLE" } } }
+            }
           }
         }
       }
-    }
-  });
-  
-  const contactInfo = await prisma.systemSetting.findUnique({
-    where: { key: "site_contact_info" },
-  });
+    });
+
+    contactInfo = await prisma.systemSetting.findUnique({
+      where: { key: "site_contact_info" },
+    });
+  } catch (error) {
+    console.warn("Failed to fetch homepage data (likely during build):", error);
+  }
 
   const categories = categoriesData.map(cat => ({
     id: cat.id,
