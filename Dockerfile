@@ -3,7 +3,7 @@ FROM node:18-alpine AS deps
 WORKDIR /app
 COPY package.json yarn.lock ./
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 RUN yarn install --frozen-lockfile
 
 # Stage 2: Build the app
@@ -18,6 +18,9 @@ RUN if grep -q 'provider = "sqlite"' prisma/schema.prisma; then \
     sed -i 's/description String?/description String? @db.Text/g' prisma/schema.prisma && \
     sed -i 's/value       String/value       String   @db.Text/g' prisma/schema.prisma; \
     fi
+
+# Ensure openssl is available for Prisma generation and build
+RUN apk add --no-cache openssl
 
 RUN npx prisma generate
 RUN yarn build
