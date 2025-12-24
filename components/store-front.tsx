@@ -171,7 +171,7 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                 {cat.products.map((product) => (
                   <Card 
                     key={product.id} 
-                    className="group relative overflow-hidden border-border/50 bg-card/40 backdrop-blur hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1"
+                    className="group relative overflow-hidden border border-primary/20 bg-card/80 shadow-md backdrop-blur hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1"
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     
@@ -219,10 +219,10 @@ export function StoreFront({ categories }: { categories: Category[] }) {
       </Tabs>
 
       <Dialog open={isBuyOpen} onOpenChange={setIsBuyOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden p-0 gap-0">
-          <div className="grid grid-cols-1 md:grid-cols-5 h-full">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto md:overflow-hidden p-0 gap-0">
+          <div className="grid grid-cols-1 md:grid-cols-5 md:h-full">
             {/* Left Column: Product Details */}
-            <div className="md:col-span-3 p-6 flex flex-col h-full overflow-y-auto bg-background">
+            <div className="order-2 md:order-1 md:col-span-3 p-6 flex flex-col md:h-full md:overflow-y-auto bg-background">
               <DialogHeader className="mb-4">
                 <DialogTitle className="text-2xl font-bold">{selectedProduct?.name}</DialogTitle>
                 <div className="flex items-center gap-2 mt-2">
@@ -242,7 +242,7 @@ export function StoreFront({ categories }: { categories: Category[] }) {
             </div>
 
             {/* Right Column: Checkout Form */}
-            <div className="md:col-span-2 bg-muted/30 border-l p-6 flex flex-col gap-6 h-full overflow-y-auto">
+            <div className="order-1 md:order-2 md:col-span-2 bg-muted/30 border-b md:border-b-0 md:border-l p-6 flex flex-col gap-6 md:h-full md:overflow-y-auto">
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <ShoppingCart className="h-5 w-5" /> 订单配置
