@@ -6,8 +6,8 @@ import ReactMarkdown from "react-markdown";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  let categoriesData = [];
-  let contactInfo = null;
+  let categoriesData: any[] = [];
+  let contactInfo: any = null;
 
   try {
     categoriesData = await prisma.category.findMany({
@@ -34,7 +34,7 @@ export default async function Home() {
   const categories = categoriesData.map(cat => ({
     id: cat.id,
     name: cat.name,
-    products: cat.products.map(p => ({
+    products: cat.products.map((p: any) => ({
       id: p.id,
       name: p.name,
       description: p.description,
