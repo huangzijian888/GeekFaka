@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/navbar";
 import { StoreFront } from "@/components/store-front";
 import { prisma } from "@/lib/prisma";
+import ReactMarkdown from "react-markdown";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,10 @@ export default async function Home() {
         }
       }
     }
+  });
+  
+  const contactInfo = await prisma.systemSetting.findUnique({
+    where: { key: "site_contact_info" },
   });
 
   const categories = categoriesData.map(cat => ({
@@ -57,7 +62,14 @@ export default async function Home() {
 
       {/* Footer */}
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        &copy; {new Date().getFullYear()} GeekFaka. All rights reserved.
+        <div className="space-y-4">
+          <p>&copy; {new Date().getFullYear()} GeekFaka. All rights reserved.</p>
+          {contactInfo?.value && (
+            <div className="prose prose-sm dark:prose-invert mx-auto">
+               <ReactMarkdown>{contactInfo.value}</ReactMarkdown>
+            </div>
+          )}
+        </div>
       </footer>
     </main>
   );

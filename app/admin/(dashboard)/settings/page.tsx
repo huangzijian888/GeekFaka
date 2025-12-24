@@ -187,6 +187,36 @@ export default function SettingsPage() {
                   必须配置正确的域名（包含 https://），否则支付后无法自动发货。
                 </p>
               </div>
+
+              <div className="pt-4 border-t space-y-4">
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                   <Settings className="h-4 w-4" /> 客服与联系
+                </h3>
+                <div className="grid gap-2">
+                   <Label>Crisp Website ID (在线客服)</Label>
+                   <Input 
+                     value={draftConfig.crisp_id || ""}
+                     onChange={e => handleChange("crisp_id", e.target.value)}
+                     placeholder="e.g. 8d40a5a2-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                     className="font-mono"
+                   />
+                   <p className="text-xs text-muted-foreground">
+                     在 <a href="https://crisp.chat/" target="_blank" className="underline hover:text-primary">Crisp</a> 注册并获取 Website ID，即可开启右下角在线客服。留空则关闭。
+                   </p>
+                </div>
+                <div className="grid gap-2">
+                   <Label>底部联系方式</Label>
+                   <Textarea 
+                     value={draftConfig.site_contact_info || ""}
+                     onChange={e => handleChange("site_contact_info", e.target.value)}
+                     placeholder="支持 Markdown，例如：联系邮箱：`support@example.com`"
+                     className="min-h-[100px] font-mono text-sm"
+                   />
+                   <p className="text-xs text-muted-foreground">
+                     将显示在网站底部的版权信息下方。
+                   </p>
+                </div>
+              </div>
               
               <div className="grid gap-2 pt-4 border-t">
                 <Label>修改管理员密码</Label>
