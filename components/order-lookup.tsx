@@ -68,9 +68,9 @@ export function OrderLookup() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
-          <Search className="h-4 w-4" />
-          <span>查单</span>
+        <Button variant="outline" size="sm" className="gap-2 border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all shadow-sm">
+          <Search className="h-4 w-4 text-primary" />
+          <span className="font-bold">查询订单</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
