@@ -21,9 +21,13 @@ export async function login(password: string) {
 
   if (password === validPassword) {
     const cookieStore = cookies();
+    // Only enable secure cookies if explicit HTTPS URL is configured or we are in production but allowing override
+    // Common issue: Docker production run on HTTP (localhost) fails with secure: true
+    const isHttps = process.env.NEXT_PUBLIC_URL?.startsWith("https");
+    
     cookieStore.set(COOKIE_NAME, "true", { 
       httpOnly: true, 
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production" && isHttps, 
       maxAge: 60 * 60 * 24,
       path: "/"
     });
