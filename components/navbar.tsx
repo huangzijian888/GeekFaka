@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ShoppingBag } from "lucide-react"
+import { OrderLookup } from "@/components/order-lookup"
 
 export function Navbar() {
   return (
@@ -22,6 +23,9 @@ export function Navbar() {
           <div className="w-full flex-1 md:w-auto md:flex-none">
             {/* Search or other items */}
           </div>
+          <nav className="flex items-center">
+            <OrderLookup />
+          </nav>
         </div>
       </div>
     </header>
