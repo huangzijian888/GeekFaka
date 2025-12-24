@@ -168,7 +168,7 @@ export function StoreFront({ categories }: { categories: Category[] }) {
 
         {categories.map((cat) => (
           <TabsContent key={cat.id} value={cat.id} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {cat.products.map((product) => (
                   <Card 
                     key={product.id} 
@@ -177,27 +177,27 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     
                     <CardHeader>
-                      <div className="flex justify-between items-start gap-2">
-                        <CardTitle className="text-lg font-bold leading-tight line-clamp-2 min-h-[3rem]">
-                          {product.name}
-                        </CardTitle>
-                        <Badge variant={product.stock > 0 ? "outline" : "destructive"} className="whitespace-nowrap">
-                          {product.stock > 0 ? (
-                            <span className="flex items-center gap-1">
-                              <Zap className="h-3 w-3 fill-current" /> {product.stock}
-                            </span>
-                          ) : "缺货"}
-                        </Badge>
-                      </div>
+                      <CardTitle className="text-xl font-bold leading-tight line-clamp-2 min-h-[3rem]">
+                        {product.name}
+                      </CardTitle>
                       <CardDescription className="line-clamp-2 min-h-[2.5rem] mt-2">
                         {product.description ? product.description.replace(/[#*`_~\[\]]/g, '') : "暂无描述"}
                       </CardDescription>
                     </CardHeader>
                     
                     <CardContent>
-                       <div className="flex items-baseline gap-1 text-primary">
-                         <span className="text-sm font-medium">¥</span>
-                         <span className="text-3xl font-bold tracking-tight">{Number(product.price).toFixed(2)}</span>
+                       <div className="flex items-center justify-between">
+                         <div className="flex items-baseline gap-1 text-primary">
+                           <span className="text-sm font-medium">¥</span>
+                           <span className="text-3xl font-bold tracking-tight">{Number(product.price).toFixed(2)}</span>
+                         </div>
+                         <Badge variant={product.stock > 0 ? "secondary" : "destructive"} className="px-3 py-1">
+                           {product.stock > 0 ? (
+                             <span className="flex items-center gap-1.5 font-medium">
+                               <Package className="h-3.5 w-3.5" /> 库存 {product.stock}
+                             </span>
+                           ) : "缺货"}
+                         </Badge>
                        </div>
                     </CardContent>
                     

@@ -35,31 +35,26 @@ export default async function Home() {
     <main className="min-h-screen bg-background dark text-foreground selection:bg-primary selection:text-primary-foreground flex flex-col">
       <Navbar />
       
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-24 sm:py-32">
+      {/* Hero Section - Background Only */}
+      <section className="relative overflow-hidden pt-10 pb-6">
         <div className="absolute top-1/2 left-1/2 -z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[100px]" />
-        
-        <div className="container mx-auto px-6 text-center">
-          <div className="mx-auto max-w-2xl space-y-6">
-            <h1 className="text-5xl font-extrabold tracking-tight sm:text-7xl">
-              <span className="block text-foreground">数字商品</span>
-              <span className="block bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">
-                自动发货平台
-              </span>
-            </h1>
-            <p className="mx-auto max-w-xl text-lg text-muted-foreground leading-relaxed">
-              GeekFaka 提供安全、极速的虚拟商品交易体验。<br/>
-              7x24小时无人值守，支付即刻发货。
-            </p>
-          </div>
-        </div>
       </section>
 
       {/* Product Section */}
-      <section className="container mx-auto max-w-6xl px-4 pb-20 flex-1">
+      <section className="container mx-auto max-w-6xl px-4 pb-12 flex-1">
         <StoreFront categories={categories} />
       </section>
       
+      {/* Info Section */}
+      <section className="py-12 text-center bg-muted/20">
+        <div className="container px-4">
+           <p className="mx-auto max-w-xl text-lg text-muted-foreground leading-relaxed">
+            GeekFaka 提供安全、极速的虚拟商品交易体验。<br/>
+            7x24小时无人值守，支付即刻发货。
+          </p>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
         &copy; {new Date().getFullYear()} GeekFaka. All rights reserved.
