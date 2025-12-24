@@ -45,9 +45,9 @@ export function StoreFront({ categories }: { categories: Category[] }) {
   const [paymentMethod, setPaymentMethod] = useState("") 
   
   // Form State
-  const [email, setEmail] = useState("")
+  const [contact, setContact] = useState("")
   const [quantity, setQuantity] = useState(1)
-  const [emailError, setEmailError] = useState("")
+  const [contactError, setContactError] = useState("")
 
   // Derived State
   const selectedChannel = channels.find(c => c.id === paymentMethod)
@@ -69,13 +69,12 @@ export function StoreFront({ categories }: { categories: Category[] }) {
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (!isBuyOpen) {
-      setEmailError("")
+      setContactError("")
     }
   }, [isBuyOpen])
 
-  const validateEmail = (email: string) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return re.test(email)
+  const validateContact = (val: string) => {
+    return val && val.trim().length > 0
   }
 
   const handleBuyClick = (product: Product) => {
@@ -87,8 +86,8 @@ export function StoreFront({ categories }: { categories: Category[] }) {
   const handlePurchase = async () => {
     if (!selectedProduct) return
     
-    if (!validateEmail(email)) {
-      setEmailError("请输入有效的邮箱地址，用于接收卡密")
+    if (!validateContact(contact)) {
+      setContactError("请输入有效的联系方式")
       return
     }
     
@@ -97,7 +96,7 @@ export function StoreFront({ categories }: { categories: Category[] }) {
       return
     }
 
-    setEmailError("")
+    setContactError("")
     setLoading(true)
 
     try {
@@ -108,7 +107,7 @@ export function StoreFront({ categories }: { categories: Category[] }) {
       const payload = {
         productId: selectedProduct.id,
         quantity,
-        email,
+        email: contact, // Map contact to email field for backend compatibility
         paymentMethod: providerName, 
         options: {
           channel: paymentMethod === "wechat" ? "wxpay" : paymentMethod 
@@ -250,16 +249,17 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                 </h3>
                 
                 <div className="grid gap-2">
-                  <Label htmlFor="email" className={cn(emailError && "text-destructive")}>
-                    接收邮箱 {emailError && <span className="text-xs font-normal ml-2">{emailError}</span>}
+                  <Label htmlFor="contact" className={cn(contactError && "text-destructive")}>
+                    联系方式 <span className="text-xs text-muted-foreground font-normal ml-1">(邮箱/QQ/手机号)</span>
+                    {contactError && <span className="text-xs font-normal ml-2 text-destructive">{contactError}</span>}
                   </Label>
                   <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    className={cn("bg-background", emailError && "border-destructive focus-visible:ring-destructive")}
+                    id="contact"
+                    type="text"
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
+                    placeholder="请输入 邮箱 / QQ / 手机号"
+                    className={cn("bg-background", contactError && "border-destructive focus-visible:ring-destructive")}
                   />
                 </div>
 
