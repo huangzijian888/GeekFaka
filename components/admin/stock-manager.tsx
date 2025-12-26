@@ -197,7 +197,7 @@ KEY-DDD-EEE-FFF"
             </div>
             <div className="flex items-center gap-2 mt-4 text-xs text-zinc-500 justify-end italic">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              最多仅显示最新 100 条可用库存
+              最多仅显示最早 100 条可用库存
             </div>
           </div>
         </div>

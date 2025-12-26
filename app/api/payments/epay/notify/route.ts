@@ -64,6 +64,7 @@ async function processNotification(data: any, req?: Request) {
             productId: order.productId,
             status: "AVAILABLE"
           },
+          orderBy: { createdAt: 'asc' }, // FIFO: Use oldest licenses first
           take: order.quantity
         });
 

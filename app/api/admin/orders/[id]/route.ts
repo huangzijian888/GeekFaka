@@ -24,6 +24,7 @@ export async function PATCH(
          // Check stock
          const licenses = await tx.license.findMany({
            where: { productId: order.productId, status: "AVAILABLE" },
+           orderBy: { createdAt: 'asc' }, // FIFO: Use oldest licenses first
            take: order.quantity
          });
 

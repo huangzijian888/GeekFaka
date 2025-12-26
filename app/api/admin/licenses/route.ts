@@ -22,7 +22,7 @@ export async function GET(req: Request) {
       productId,
       status: "AVAILABLE" 
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" }, // Changed to ASC for FIFO view
     take: 100 // Limit for performance, usually enough for view
   });
 
