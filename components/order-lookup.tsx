@@ -58,10 +58,10 @@ export function OrderLookup() {
 
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case "PAID": return <Badge className="bg-green-500 hover:bg-green-600">已支付</Badge>
-      case "PENDING": return <Badge variant="secondary" className="text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30">待支付</Badge>
-      case "EXPIRED": return <Badge variant="destructive">已过期</Badge>
-      default: return <Badge variant="outline">{status}</Badge>
+      case "PAID": return <Badge className="bg-green-500 hover:bg-green-600 px-1.5 py-0 text-[10px] h-5">已支付</Badge>
+      case "PENDING": return <Badge variant="secondary" className="text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 px-1.5 py-0 text-[10px] h-5">待支付</Badge>
+      case "EXPIRED": return <Badge variant="destructive" className="px-1.5 py-0 text-[10px] h-5">已过期</Badge>
+      default: return <Badge variant="outline" className="px-1.5 py-0 text-[10px] h-5">{status}</Badge>
     }
   }
 
@@ -109,16 +109,18 @@ export function OrderLookup() {
                   className="block group"
                 >
                   <div className="border rounded-lg p-3 hover:bg-accent/50 transition-colors flex items-center justify-between">
-                      <div className="space-y-1 overflow-hidden flex-1 mr-4">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold truncate text-sm">{order.product.name}</span>
-                          {getStatusBadge(order.status)}
+                      <div className="space-y-2 flex-1 mr-4">
+                        <div className="font-bold text-sm leading-tight text-foreground/90">
+                          {order.product.name}
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                          {getStatusBadge(order.status)}
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" /> {formatDate(order.createdAt)}
                           </span>
-                          <span className="font-mono">¥{Number(order.totalAmount).toFixed(2)}</span>
+                          <span className="font-mono font-medium text-foreground">
+                            ¥{Number(order.totalAmount).toFixed(2)}
+                          </span>
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
