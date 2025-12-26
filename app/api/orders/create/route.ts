@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
     // 3. Create Order
     // Generate a simple order number
-    const orderNo = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const orderNo = `HT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const order = await prisma.order.create({
       data: {
