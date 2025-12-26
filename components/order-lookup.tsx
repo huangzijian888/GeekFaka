@@ -73,7 +73,7 @@ export function OrderLookup() {
           <span className="font-bold">查询订单</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>订单查询</DialogTitle>
           <DialogDescription>
@@ -100,7 +100,7 @@ export function OrderLookup() {
           )}
 
           {results.length > 0 && (
-            <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+            <div className="max-h-[50vh] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
               {results.map((order) => (
                 <Link 
                   key={order.orderNo} 
