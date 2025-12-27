@@ -171,17 +171,40 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                 {cat.products.map((product) => (
                   <Card 
                     key={product.id} 
-                    className="group relative overflow-hidden border border-primary/20 bg-card/80 shadow-md backdrop-blur hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1"
+                    className={cn(
+                      "group relative overflow-hidden border border-primary/20 bg-card/80 shadow-md backdrop-blur transition-all duration-300",
+                      product.stock > 0 
+                        ? "hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1" 
+                        : "opacity-60 grayscale-[0.8] cursor-not-allowed pointer-events-none"
+                    )}
                   >
+                    {/* Hover Overlay for Details */}
+                    <div className="absolute inset-0 bg-background/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-center items-center p-6 text-center">
+                       <h4 className="font-bold text-lg mb-2 text-primary">{product.name}</h4>
+                       <div className="text-sm text-muted-foreground line-clamp-6">
+                         <ReactMarkdown>{product.description || "暂无详细描述"}</ReactMarkdown>
+                       </div>
+                       <Button 
+                         variant="outline" 
+                         className="mt-4 border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
+                         onClick={(e) => {
+                           // Allow click even if covering, but need to stop propagation if card has click handler
+                           // Here button handles it.
+                           handleBuyClick(product)
+                         }}
+                       >
+                         查看详情 & 购买
+                       </Button>
+                    </div>
+
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     
                     <CardHeader>
                       <CardTitle className="text-xl font-bold leading-tight line-clamp-2 min-h-[3rem]">
                         {product.name}
                       </CardTitle>
-                      <CardDescription className="line-clamp-2 min-h-[2.5rem] mt-2">
-                        {product.description ? product.description.replace(/[#*`_~\[\]]/g, '') : "暂无描述"}
-                      </CardDescription>
+                      {/* Hide description in default view to keep it clean */}
+                      <div className="h-[2.5rem]" /> 
                     </CardHeader>
                     
                     <CardContent>
@@ -202,13 +225,13 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                     
                     <CardFooter>
                       <Button 
-                        className="w-full font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" 
+                        className="w-full font-semibold shadow-lg shadow-primary/20 transition-all" 
                         disabled={product.stock <= 0}
                         onClick={() => handleBuyClick(product)}
                         size="lg"
                       >
                         <ShoppingCart className="mr-2 h-4 w-4" /> 
-                        立即购买
+                        {product.stock > 0 ? "立即购买" : "已售罄"}
                       </Button>
                     </CardFooter>
                   </Card>
