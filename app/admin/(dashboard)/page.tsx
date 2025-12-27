@@ -1,8 +1,15 @@
 import { isAuthenticated } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, ShoppingBag, Package, Users } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CreditCard, ShoppingBag, Package, Activity, TrendingUp, AlertTriangle } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+
+// Helper to calculate percentage change
+const calculateChange = (current: number, previous: number) => {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return ((current - previous) / previous) * 100;
+};
 
 export default async function DashboardPage() {
   const isAuth = await isAuthenticated();
@@ -10,78 +17,213 @@ export default async function DashboardPage() {
     redirect("/admin/login");
   }
 
-  // Fetch stats
-  const productCount = await prisma.product.count();
-  const orderCount = await prisma.order.count({ where: { status: "PAID" } });
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterdayStart = new Date(todayStart);
+  yesterdayStart.setDate(yesterdayStart.getDate() - 1);
   
-  // Calculate total revenue (SQLite usually returns Decimal as string or number, handled by Prisma)
-  const orders = await prisma.order.findMany({ 
-    where: { status: "PAID" },
+  // 1. Fetch Orders for Today and Yesterday
+  const todayOrders = await prisma.order.findMany({
+    where: { status: "PAID", paidAt: { gte: todayStart } },
     select: { totalAmount: true }
   });
+
+  const yesterdayOrders = await prisma.order.findMany({
+    where: { status: "PAID", paidAt: { gte: yesterdayStart, lt: todayStart } },
+    select: { totalAmount: true }
+  });
+
+  const todayRevenue = todayOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
+  const yesterdayRevenue = yesterdayOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
   
-  const totalRevenue = orders.reduce((acc, order) => acc + Number(order.totalAmount), 0);
+  const todayOrderCount = todayOrders.length;
+  const yesterdayOrderCount = yesterdayOrders.length;
+
+  const revenueChange = calculateChange(todayRevenue, yesterdayRevenue);
+  const orderChange = calculateChange(todayOrderCount, yesterdayOrderCount);
+
+  // 2. Fetch Last 7 Days Trend
+  const sevenDaysAgo = new Date(todayStart);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
   
-  // Calculate stock status
-  const totalLicenses = await prisma.license.count();
-  const soldLicenses = await prisma.license.count({ where: { status: "SOLD" } });
+  const recentOrders = await prisma.order.findMany({
+    where: { status: "PAID", paidAt: { gte: sevenDaysAgo } },
+    select: { paidAt: true, totalAmount: true }
+  });
+
+  // Group by date
+  const trendMap = new Map<string, number>();
+  // Initialize last 7 days with 0
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sevenDaysAgo);
+    d.setDate(d.getDate() + i);
+    const key = d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }); // e.g. "12/25"
+    trendMap.set(key, 0);
+  }
+
+  recentOrders.forEach(order => {
+    if (order.paidAt) {
+      const key = order.paidAt.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+      if (trendMap.has(key)) {
+        trendMap.set(key, (trendMap.get(key) || 0) + Number(order.totalAmount));
+      }
+    }
+  });
+
+  const trendData = Array.from(trendMap.entries()).map(([date, amount]) => ({ date, amount }));
+  const maxAmount = Math.max(...trendData.map(d => d.amount), 10); // Avoid division by zero
+
+  // 3. Overall Stats
+  const productCount = await prisma.product.count();
+  const totalRevenueAllTimeRaw = await prisma.order.aggregate({
+    where: { status: "PAID" },
+    _sum: { totalAmount: true }
+  });
+  const totalRevenueAllTime = Number(totalRevenueAllTimeRaw._sum.totalAmount || 0);
+
+  // 4. Low Stock Products (< 10)
+  // Prisma doesn't support filtering by relation count directly in findMany nicely without advanced filtering, 
+  // but we can fetch products and include count, then filter in JS or use `where` if using SQL logic.
+  // For simplicity and performance on small catalogs, fetching products with counts is fine.
+  const productsWithStock = await prisma.product.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      name: true,
+      price: true,
+      _count: {
+        select: { licenses: { where: { status: "AVAILABLE" } } }
+      }
+    }
+  });
+
+  const lowStockProducts = productsWithStock
+    .map(p => ({ ...p, stock: p._count.licenses }))
+    .filter(p => p.stock < 10)
+    .sort((a, b) => a.stock - b.stock)
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">仪表盘</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-white">仪表盘</h1>
       
+      {/* Top Stats Row */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">总销售额</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">今日收入</CardTitle>
+            <CreditCard className="h-4 w-4 text-indigo-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">¥{totalRevenue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              累计收入
+            <div className="text-2xl font-bold text-indigo-400">¥{todayRevenue.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              较昨日 <span className={revenueChange >= 0 ? "text-green-500" : "text-red-500"}>
+                {revenueChange >= 0 ? "+" : ""}{revenueChange.toFixed(1)}%
+              </span>
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">今日订单</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-emerald-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-400">{todayOrderCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              较昨日 <span className={orderChange >= 0 ? "text-green-500" : "text-red-500"}>
+                {orderChange >= 0 ? "+" : ""}{orderChange.toFixed(1)}%
+              </span>
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">成交订单</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">累计收入</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{orderCount}</div>
-            <p className="text-xs text-muted-foreground">
-              已支付订单
-            </p>
+            <div className="text-2xl font-bold">¥{totalRevenueAllTime.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground mt-1">历史总流水</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">商品数量</CardTitle>
+            <CardTitle className="text-sm font-medium">在售商品</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{productCount}</div>
-            <p className="text-xs text-muted-foreground">
-              上架商品总数
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">当前活跃商品</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-7">
+        {/* Revenue Trend Chart */}
+        <Card className="md:col-span-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" /> 
+              近7日收入趋势
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[200px] w-full flex items-end justify-between gap-2 pt-4">
+              {trendData.map((item) => {
+                const heightPercent = (item.amount / maxAmount) * 100;
+                return (
+                  <div key={item.date} className="flex flex-col items-center gap-2 flex-1 group">
+                    <div className="relative w-full bg-primary/10 rounded-t-sm h-full flex items-end overflow-hidden hover:bg-primary/20 transition-colors">
+                      <div 
+                        className="w-full bg-primary/80 transition-all duration-500 ease-out group-hover:bg-primary"
+                        style={{ height: `${heightPercent}%` }}
+                      />
+                      {/* Tooltipish value */}
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-background border px-2 py-1 rounded shadow-lg z-10">
+                        ¥{item.amount.toFixed(0)}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{item.date}</span>
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">库存消耗</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+        {/* Low Stock Alert */}
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-500">
+              <AlertTriangle className="h-5 w-5" />
+              缺货预警
+            </CardTitle>
+            <CardDescription>库存少于 10 件的商品</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-               {totalLicenses > 0 ? ((soldLicenses / totalLicenses) * 100).toFixed(0) : 0}%
+            <div className="space-y-4">
+              {lowStockProducts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  库存充足，暂无预警
+                </div>
+              ) : (
+                lowStockProducts.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between border-b border-border/50 last:border-0 pb-3 last:pb-0">
+                    <div className="flex-1 min-w-0 pr-4">
+                      <p className="text-sm font-medium truncate">{p.name}</p>
+                      <p className="text-xs text-muted-foreground">单价: ¥{Number(p.price).toFixed(2)}</p>
+                    </div>
+                    <div className={p.stock === 0 ? "text-red-500 font-bold" : "text-yellow-500 font-bold"}>
+                      {p.stock === 0 ? "已售罄" : `剩 ${p.stock} 件`}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              已售 {soldLicenses} / 总计 {totalLicenses}
-            </p>
           </CardContent>
         </Card>
       </div>
