@@ -9,6 +9,10 @@ export async function GET(req: Request) {
   const search = searchParams.get("search");
   const status = searchParams.get("status");
   const productId = searchParams.get("productId");
+  
+  const page = parseInt(searchParams.get("page") || "1");
+  const pageSize = parseInt(searchParams.get("pageSize") || "20");
+  const skip = (page - 1) * pageSize;
 
   const where: any = {};
   
@@ -37,14 +41,24 @@ export async function GET(req: Request) {
     data: { status: "EXPIRED" }
   });
 
-  const orders = await prisma.order.findMany({
-    where,
-    include: {
-      product: true
-    },
-    orderBy: { createdAt: "desc" },
-    take: 50 // Simple pagination limit for now
-  });
+  const [total, orders] = await prisma.$transaction([
+    prisma.order.count({ where }),
+    prisma.order.findMany({
+      where,
+      include: {
+        product: true
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize
+    })
+  ]);
 
-  return NextResponse.json(orders);
+  return NextResponse.json({
+    orders,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize)
+  });
 }

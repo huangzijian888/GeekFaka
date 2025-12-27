@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Loader2, CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react"
+import { Search, Loader2, CheckCircle2, XCircle, Clock, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -38,15 +38,24 @@ export default function OrdersPage() {
   const [productFilter, setProductFilter] = useState("ALL")
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+
   useEffect(() => {
-    fetchOrders()
+    fetchOrders(1)
     fetchProducts()
   }, [])
 
-  // Refetch when filters change
+  // Refetch when filters change, resetting to page 1
   useEffect(() => {
-    fetchOrders()
+    fetchOrders(1)
   }, [statusFilter, productFilter])
+
+  // Refetch when page changes (but via manual control, so strict effect might double fetch if not careful)
+  // Better to call fetchOrders directly on page change handler
 
   const fetchProducts = async () => {
     try {
@@ -58,20 +67,30 @@ export default function OrdersPage() {
     }
   }
 
-  const fetchOrders = async (query?: string) => {
+  const fetchOrders = async (page = currentPage, query?: string) => {
     setLoading(true)
     try {
       // Use current search state if query not provided
       const searchQuery = query !== undefined ? query : search
       
       const params = new URLSearchParams()
+      params.set("page", page.toString())
+      params.set("pageSize", pageSize.toString())
       if (searchQuery) params.set("search", searchQuery)
       if (statusFilter !== "ALL") params.set("status", statusFilter)
       if (productFilter !== "ALL") params.set("productId", productFilter)
 
       const res = await fetch(`/api/admin/orders?${params.toString()}`)
       const data = await res.json()
-      setOrders(data)
+      
+      if (res.ok) {
+        setOrders(data.orders || [])
+        setTotalPages(data.totalPages || 1)
+        setTotalCount(data.total || 0)
+        setCurrentPage(data.page || 1)
+      } else {
+        setOrders([])
+      }
     } catch (error) {
       console.error(error)
     } finally {
@@ -81,7 +100,13 @@ export default function OrdersPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    fetchOrders(search)
+    fetchOrders(1, search)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return
+    setCurrentPage(newPage)
+    fetchOrders(newPage)
   }
 
   const handleManualFulfill = async (orderId: string) => {
@@ -97,7 +122,7 @@ export default function OrdersPage() {
       
       const data = await res.json()
       if (res.ok) {
-        fetchOrders(search)
+        fetchOrders(currentPage)
       } else {
         alert(data.error)
       }
@@ -116,7 +141,8 @@ export default function OrdersPage() {
       case "PENDING":
         return <Badge variant="outline" className="text-yellow-500 border-yellow-500">待支付</Badge>
       case "FAILED":
-        return <Badge variant="destructive">失败</Badge>
+      case "EXPIRED":
+        return <Badge variant="destructive">失败/过期</Badge>
       default:
         return <Badge variant="secondary">{status}</Badge>
     }
@@ -255,6 +281,31 @@ export default function OrdersPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          共 {totalCount} 条记录，页码 {currentPage} / {totalPages}
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage <= 1 || loading}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" /> 上一页
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages || loading}
+          >
+            下一页 <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
       </div>
     </div>
   )
