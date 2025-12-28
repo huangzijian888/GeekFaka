@@ -15,8 +15,8 @@ COPY . .
 # [NEW] Perform MySQL transformation during build time
 RUN if grep -q 'provider = "sqlite"' prisma/schema.prisma; then \
     sed -i 's/provider = "sqlite"/provider = "mysql"/g' prisma/schema.prisma && \
-    sed -i 's/description String?/description String? @db.Text/g' prisma/schema.prisma && \
-    sed -i 's/value       String/value       String   @db.Text/g' prisma/schema.prisma && \
+    sed -i 's/description String?/description String? @db.LongText/g' prisma/schema.prisma && \
+    sed -i 's/value       String/value       String   @db.LongText/g' prisma/schema.prisma && \
     sed -i 's/content   String?/content   String? @db.LongText/g' prisma/schema.prisma; \
     fi
 
