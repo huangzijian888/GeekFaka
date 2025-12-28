@@ -28,6 +28,7 @@ interface Product {
   categoryId: string
   category: Category
   isActive: boolean
+  deliveryFormat: string
   _count: {
     licenses: number
   }
@@ -51,6 +52,7 @@ export default function ProductsPage() {
     description: "",
     price: "",
     categoryId: "",
+    deliveryFormat: "SINGLE"
   })
 
   useEffect(() => {
@@ -83,6 +85,7 @@ export default function ProductsPage() {
         description: product.description || "",
         price: product.price,
         categoryId: product.categoryId,
+        deliveryFormat: product.deliveryFormat || "SINGLE"
       })
     } else {
       setEditingProduct(null)
@@ -91,6 +94,7 @@ export default function ProductsPage() {
         description: "",
         price: "",
         categoryId: categories[0]?.id || "",
+        deliveryFormat: "SINGLE"
       })
     }
     setIsDialogOpen(true)
@@ -337,12 +341,33 @@ export default function ProductsPage() {
                     />
                   </div>
                 </div>
+
+                <div className="grid gap-2">
+                  <Label>发货格式</Label>
+                  <Select 
+                    value={formData.deliveryFormat} 
+                    onValueChange={(val) => setFormData({ ...formData, deliveryFormat: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SINGLE">普通 (单激活码/IP)</SelectItem>
+                      <SelectItem value="ACCOUNT_PASS">账号----密码</SelectItem>
+                      <SelectItem value="ACCOUNT_FULL">账号----密码----辅助邮箱----2FA</SelectItem>
+                      <SelectItem value="VIRTUAL_CARD">虚拟卡 (卡号|月/年|CVV)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">影响用户查收卡密时的展示方式</p>
+                </div>
+
                 <div className="pt-4">
                    <p className="text-xs text-muted-foreground leading-relaxed">
                      提示：<br/>
                      1. 商品创建后默认为上架状态。<br/>
                      2. 请在“库存管理”中添加卡密。<br/>
-                     3. 描述支持图片和超链接。
+                     3. 描述支持图片和超链接。<br/>
+                     4. 请务必按所选格式添加卡密。
                    </p>
                 </div>
               </div>

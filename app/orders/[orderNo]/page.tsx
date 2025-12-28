@@ -4,10 +4,12 @@ import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { CheckCircle2, Clock, Copy, XCircle, Loader2 } from "lucide-react"
+import { CheckCircle2, Clock, Copy, XCircle, Loader2, Check, CreditCard, User, ShieldCheck, Mail, Key } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { useSearchParams } from "next/navigation"
+import { Input } from "@/components/ui/input"
+import React from "react"
 
 interface Order {
   id: string
@@ -19,12 +21,109 @@ interface Order {
   paidAt: any
   product: {
     name: string
+    deliveryFormat: string
   }
   licenses: {
     id: string
     code: string
   }[]
   createdAt: any
+}
+
+function LicenseItem({ code, index, format }: { code: string, index: number, format: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const renderField = (label: string, value: string, icon?: any) => (
+    <div className="space-y-1.5">
+      <div className="flex justify-between items-center px-1">
+        <span className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1">
+          {icon && React.createElement(icon, { className: "h-3 w-3" })}
+          {label}
+        </span>
+      </div>
+      <div className="flex gap-2">
+        <Input 
+          readOnly 
+          value={value} 
+          className="bg-background/50 font-mono text-sm h-9 border-primary/10 focus-visible:ring-0 focus-visible:border-primary/30" 
+        />
+        <Button variant="secondary" size="icon" className="h-9 w-9 shrink-0 hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => handleCopy(value)}>
+          <Copy className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Normal / SINGLE format
+  if (format === "SINGLE" || !format) {
+    return (
+      <div className="group bg-muted/30 p-4 rounded-xl border border-border/50 hover:border-primary/30 transition-all">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">卡密 #{index + 1}</span>
+          <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleCopy(code)}>
+            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+          </Button>
+        </div>
+        <code className="block bg-background/80 p-4 rounded-lg border font-mono text-lg break-all select-all text-primary font-bold">
+          {code}
+        </code>
+      </div>
+    );
+  }
+
+  // Account formats (using ----)
+  if (format.startsWith("ACCOUNT_")) {
+    const parts = code.split("----");
+    const labels = format === "ACCOUNT_FULL" 
+      ? ["账号", "密码", "辅助邮箱", "2FA 密钥"] 
+      : ["账号", "密码"];
+    const icons = [User, ShieldCheck, Mail, Key];
+
+    return (
+      <div className="group bg-muted/30 p-5 rounded-xl border border-border/50 hover:border-primary/30 transition-all space-y-4">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">账号信息 #{index + 1}</span>
+          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 px-2 border-primary/20 hover:border-primary/50" onClick={() => handleCopy(code)}>
+            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+            复制完整格式
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 gap-3">
+          {labels.map((label, i) => parts[i] && renderField(label, parts[i], icons[i]))}
+        </div>
+      </div>
+    );
+  }
+
+  // Virtual Card format (using |)
+  if (format === "VIRTUAL_CARD") {
+    const parts = code.split("|");
+    const labels = ["卡号", "有效期 (月/年)", "CVV 安全码"];
+    const icons = [CreditCard, Clock, ShieldCheck];
+
+    return (
+      <div className="group bg-muted/30 p-5 rounded-xl border border-border/50 hover:border-primary/30 transition-all space-y-4">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">虚拟卡信息 #{index + 1}</span>
+          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 px-2 border-primary/20 hover:border-primary/50" onClick={() => handleCopy(code)}>
+            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+            复制完整格式
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 gap-3">
+          {labels.map((label, i) => parts[i] && renderField(label, parts[i], icons[i]))}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 export default function OrderPage({ params }: { params: { orderNo: string } }) {
@@ -163,7 +262,7 @@ export default function OrderPage({ params }: { params: { orderNo: string } }) {
                   <span className="font-medium">{order.quantity} 个</span>
                 </div>
                 <div className="space-y-1">
-                   <span className="text-muted-foreground block uppercase text-[10px] font-bold tracking-widest">联系邮箱</span>
+                   <span className="text-muted-foreground block uppercase text-[10px] font-bold tracking-widest">联系方式</span>
                    <span className="font-medium">{order.email || "-"}</span>
                 </div>
              </div>
@@ -176,19 +275,9 @@ export default function OrderPage({ params }: { params: { orderNo: string } }) {
                     <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                     <h3 className="font-bold text-lg">您的卡密信息</h3>
                  </div>
-                 <div className="space-y-3">
+                 <div className="space-y-4">
                    {order.licenses.map((license, index) => (
-                     <div key={license.id} className="group bg-muted/30 p-4 rounded-xl border border-border/50 hover:border-primary/30 transition-all">
-                       <div className="flex justify-between items-center mb-2">
-                         <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">卡密 #{index + 1}</span>
-                         <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => navigator.clipboard.writeText(license.code)}>
-                            <Copy className="h-3 w-3" />
-                         </Button>
-                       </div>
-                       <code className="block bg-background/80 p-4 rounded-lg border font-mono text-lg break-all select-all text-primary font-bold">
-                         {license.code}
-                       </code>
-                     </div>
+                     <LicenseItem key={license.id} code={license.code} index={index} />
                    ))}
                  </div>
                </div>

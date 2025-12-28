@@ -12,7 +12,7 @@ export async function GET(
       where: { orderNo },
       include: {
         product: {
-          select: { name: true, description: true }
+          select: { name: true, description: true, deliveryFormat: true }
         },
         licenses: {
           select: { id: true, code: true }

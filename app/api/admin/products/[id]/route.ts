@@ -13,7 +13,7 @@ export async function PATCH(
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
   try {
-    const { name, description, price, categoryId, isActive } = await req.json();
+    const { name, description, price, categoryId, isActive, deliveryFormat } = await req.json();
     const { id } = params;
 
     const product = await prisma.product.update({
@@ -24,10 +24,11 @@ export async function PATCH(
         price,
         categoryId,
         isActive,
+        deliveryFormat
       }
     });
     
-    log.info({ productId: id, changes: { name, price, isActive } }, "Product updated");
+    log.info({ productId: id, changes: { name, price, isActive, deliveryFormat } }, "Product updated");
     return NextResponse.json(product);
   } catch (error) {
     log.error({ err: error, productId: params.id }, "Failed to update product");
