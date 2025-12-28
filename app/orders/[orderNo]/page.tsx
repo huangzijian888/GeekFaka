@@ -277,7 +277,12 @@ export default function OrderPage({ params }: { params: { orderNo: string } }) {
                  </div>
                  <div className="space-y-4">
                    {order.licenses.map((license, index) => (
-                     <LicenseItem key={license.id} code={license.code} index={index} />
+                     <LicenseItem 
+                       key={license.id} 
+                       code={license.code} 
+                       index={index} 
+                       format={order.product.deliveryFormat} 
+                     />
                    ))}
                  </div>
                </div>
