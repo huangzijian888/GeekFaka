@@ -84,15 +84,11 @@ export default async function AdminLayout({
           </Link>
         </nav>
         <div className="border-t p-4">
-          <form action="/api/admin/login" method="DELETE"> 
-            {/* DELETE method not supported by form directly, need client component or just link to api */}
-            {/* Let's just put a client button later. For now a simple link */}
-            <Link href="/api/admin/logout"> 
-               <Button variant="outline" className="w-full">
-                 <LogOut className="mr-2 h-4 w-4" /> 退出登录
-               </Button>
-            </Link>
-          </form>
+          <a href="/api/admin/logout"> 
+             <Button variant="outline" className="w-full">
+               <LogOut className="mr-2 h-4 w-4" /> 退出登录
+             </Button>
+          </a>
         </div>
       </aside>
 
