@@ -194,6 +194,18 @@ export default function SettingsPage() {
                    <Settings className="h-4 w-4" /> 客服与联系
                 </h3>
                 <div className="grid gap-2">
+                   <Label>网站公告 (首页弹出/顶部显示)</Label>
+                   <Textarea 
+                     value={draftConfig.site_announcement || ""}
+                     onChange={e => handleChange("site_announcement", e.target.value)}
+                     placeholder="支持 Markdown。例如：🎉 欢迎光临！今日全场 9 折优惠。"
+                     className="min-h-[100px] font-mono text-sm"
+                   />
+                   <p className="text-xs text-muted-foreground">
+                     该内容将显示在网站首页的显著位置。
+                   </p>
+                </div>
+                <div className="grid gap-2 pt-2">
                    <Label>Crisp Website ID (在线客服)</Label>
                    <Input 
                      value={draftConfig.crisp_id || ""}

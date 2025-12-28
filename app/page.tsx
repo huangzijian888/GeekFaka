@@ -2,12 +2,14 @@ import { Navbar } from "@/components/navbar";
 import { StoreFront } from "@/components/store-front";
 import { prisma } from "@/lib/prisma";
 import ReactMarkdown from "react-markdown";
+import { Megaphone } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   let categoriesData: any[] = [];
   let contactInfo: any = null;
+  let announcement: any = null;
 
   try {
     categoriesData = await prisma.category.findMany({
@@ -26,6 +28,10 @@ export default async function Home() {
 
     contactInfo = await prisma.systemSetting.findUnique({
       where: { key: "site_contact_info" },
+    });
+
+    announcement = await prisma.systemSetting.findUnique({
+      where: { key: "site_announcement" },
     });
   } catch (error) {
     console.warn("Failed to fetch homepage data (likely during build):", error);
@@ -47,6 +53,18 @@ export default async function Home() {
     <main className="min-h-screen bg-background dark text-foreground selection:bg-primary selection:text-primary-foreground flex flex-col">
       <Navbar />
       
+      {/* Announcement Banner */}
+      {announcement?.value && (
+        <div className="bg-primary/10 border-b border-primary/20">
+          <div className="container mx-auto max-w-6xl px-4 py-3 flex items-start gap-3">
+            <Megaphone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div className="prose prose-sm dark:prose-invert max-w-none text-primary/90 font-medium">
+              <ReactMarkdown>{announcement.value}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section - Background Only */}
       <section className="relative overflow-hidden pt-10 pb-6">
         <div className="absolute top-1/2 left-1/2 -z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[100px]" />

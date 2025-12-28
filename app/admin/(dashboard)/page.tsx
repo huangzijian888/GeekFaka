@@ -17,8 +17,14 @@ export default async function DashboardPage() {
     redirect("/admin/login");
   }
 
+  // Timezone Adjustment for China (UTC+8)
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const utcOffset = 8;
+  const chinaTime = new Date(now.getTime() + utcOffset * 3600000);
+  
+  const todayStartChina = new Date(chinaTime.getFullYear(), chinaTime.getMonth(), chinaTime.getDate());
+  const todayStart = new Date(todayStartChina.getTime() - utcOffset * 3600000);
+  
   const yesterdayStart = new Date(todayStart);
   yesterdayStart.setDate(yesterdayStart.getDate() - 1);
   
@@ -57,13 +63,14 @@ export default async function DashboardPage() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(sevenDaysAgo);
     d.setDate(d.getDate() + i);
-    const key = d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }); // e.g. "12/25"
+    // Format label using China locale
+    const key = d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', timeZone: 'Asia/Shanghai' });
     trendMap.set(key, 0);
   }
 
   recentOrders.forEach(order => {
     if (order.paidAt) {
-      const key = order.paidAt.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+      const key = order.paidAt.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', timeZone: 'Asia/Shanghai' });
       if (trendMap.has(key)) {
         trendMap.set(key, (trendMap.get(key) || 0) + Number(order.totalAmount));
       }
@@ -71,7 +78,7 @@ export default async function DashboardPage() {
   });
 
   const trendData = Array.from(trendMap.entries()).map(([date, amount]) => ({ date, amount }));
-  const maxAmount = Math.max(...trendData.map(d => d.amount), 10); // Avoid division by zero
+  const maxAmount = Math.max(...trendData.map(d => d.amount), 10);
 
   // 3. Overall Stats
   const productCount = await prisma.product.count();
@@ -82,9 +89,6 @@ export default async function DashboardPage() {
   const totalRevenueAllTime = Number(totalRevenueAllTimeRaw._sum.totalAmount || 0);
 
   // 4. Low Stock Products (< 10)
-  // Prisma doesn't support filtering by relation count directly in findMany nicely without advanced filtering, 
-  // but we can fetch products and include count, then filter in JS or use `where` if using SQL logic.
-  // For simplicity and performance on small catalogs, fetching products with counts is fine.
   const productsWithStock = await prisma.product.findMany({
     where: { isActive: true },
     select: {
