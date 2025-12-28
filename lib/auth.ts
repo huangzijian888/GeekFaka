@@ -3,12 +3,38 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 
 const COOKIE_NAME = process.env.COOKIE_NAME || "geekfaka_admin_session";
+const SESSION_DURATION = 60 * 60 * 24 * 30; // 30 Days (Extended for stability)
 const log = logger.child({ module: 'Auth' });
+
+function getCookieOptions() {
+  // SIMPLIFICATION: Default to non-secure to prevent 401s in Docker/Nginx/HTTP scenarios.
+  // Only enable Secure if explicitly requested via env var.
+  const isSecure = process.env.ENABLE_SECURE_COOKIE === "true";
+  
+  return { 
+    httpOnly: true, 
+    secure: isSecure, 
+    maxAge: SESSION_DURATION,
+    sameSite: "lax" as const, // Lax is safer for navigation
+    path: "/"
+  };
+}
 
 export async function isAuthenticated() {
   const cookieStore = cookies();
   const session = cookieStore.get(COOKIE_NAME);
-  return !!session?.value;
+  
+  if (session?.value) {
+    // Sliding expiration: Refresh cookie on every valid request
+    try {
+      cookieStore.set(COOKIE_NAME, session.value, getCookieOptions());
+    } catch (e) {
+      // Ignore errors in readonly contexts (e.g. rendering pages)
+    }
+    return true;
+  }
+  
+  return false;
 }
 
 export async function login(password: string) {
@@ -21,16 +47,7 @@ export async function login(password: string) {
 
   if (password === validPassword) {
     const cookieStore = cookies();
-    // Only enable secure cookies if explicit HTTPS URL is configured or we are in production but allowing override
-    // Common issue: Docker production run on HTTP (localhost) fails with secure: true
-    const isHttps = process.env.NEXT_PUBLIC_URL?.startsWith("https");
-    
-    cookieStore.set(COOKIE_NAME, "true", { 
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === "production" && isHttps, 
-      maxAge: 60 * 60 * 24,
-      path: "/"
-    });
+    cookieStore.set(COOKIE_NAME, "true", getCookieOptions());
     log.info("Admin login successful");
     return true;
   }
