@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CreditCard, ShoppingBag, Package, Activity, TrendingUp, AlertTriangle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { RevenueChart } from "@/components/admin/revenue-chart";
 
 // Helper to calculate percentage change
 const calculateChange = (current: number, previous: number) => {
@@ -78,7 +79,6 @@ export default async function DashboardPage() {
   });
 
   const trendData = Array.from(trendMap.entries()).map(([date, amount]) => ({ date, amount }));
-  const maxAmount = Math.max(...trendData.map(d => d.amount), 10);
 
   // 3. Overall Stats
   const productCount = await prisma.product.count();
@@ -176,26 +176,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] w-full flex items-end justify-between gap-2 pt-4">
-              {trendData.map((item) => {
-                const heightPercent = (item.amount / maxAmount) * 100;
-                return (
-                  <div key={item.date} className="flex flex-col items-center gap-2 flex-1 group">
-                    <div className="relative w-full bg-primary/10 rounded-t-sm h-full flex items-end overflow-hidden hover:bg-primary/20 transition-colors">
-                      <div 
-                        className="w-full bg-primary/80 transition-all duration-500 ease-out group-hover:bg-primary"
-                        style={{ height: `${heightPercent}%` }}
-                      />
-                      {/* Tooltipish value */}
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-background border px-2 py-1 rounded shadow-lg z-10">
-                        ¥{item.amount.toFixed(0)}
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">{item.date}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <RevenueChart data={trendData} />
           </CardContent>
         </Card>
 
