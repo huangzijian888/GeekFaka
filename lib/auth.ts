@@ -24,33 +24,32 @@ function getCookieOptions() {
 }
 
 export async function isAuthenticated() {
-  const cookieStore = cookies();
-  const session = cookieStore.get(COOKIE_NAME);
-  
-  if (!session?.value) return false;
-
   try {
-    // Verify JWT
-    const { payload } = await jwtVerify(session.value, JWT_SECRET);
+    const cookieStore = cookies();
+    const session = cookieStore.get(COOKIE_NAME);
     
-    // Check role
-    if (payload.role !== "admin") return false;
+    if (!session?.value) return false;
+
+    // Verify JWT with clock tolerance to handle slight server time drifts
+    const { payload } = await jwtVerify(session.value, JWT_SECRET, {
+      clockTolerance: "1m"
+    });
+    
+    if (payload.role !== "admin") {
+      log.warn("Auth failed: Invalid role in token");
+      return false;
+    }
 
     return true;
-  } catch (error) {
-    // CRITICAL FIX: If the token is invalid (e.g. old "true" string or expired), 
-    // we MUST try to clear it to prevent the browser from sending it again and again.
-    // Note: delete() might fail in some read-only render phases, but it's best effort.
-    try {
-      cookieStore.delete(COOKIE_NAME);
-    } catch (e) {}
-    
+  } catch (error: any) {
+    // Log the specific error to help troubleshooting
+    // Important: check your server/docker logs for this message
+    log.error({ err: error.message, code: error.code }, "JWT verification failed");
     return false;
   }
 }
 
 export async function login(password: string) {
-  // 1. Try DB Password
   const dbSetting = await prisma.systemSetting.findUnique({
     where: { key: "admin_password" }
   });
@@ -58,15 +57,14 @@ export async function login(password: string) {
   const validPassword = dbSetting?.value || process.env.ADMIN_PASSWORD;
 
   if (password === validPassword) {
-    // Generate JWT
+    // Generate JWT - We remove internal expiration and rely on Cookie maxAge for session management.
+    // This is more robust against time synchronization issues.
     const token = await new SignJWT({ role: "admin" })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
-      .setExpirationTime("30d")
       .sign(JWT_SECRET);
 
     const cookieStore = cookies();
-    // Use consistent options
     cookieStore.set(COOKIE_NAME, token, getCookieOptions());
     log.info("Admin login successful");
     return true;
