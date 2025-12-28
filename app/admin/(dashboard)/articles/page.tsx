@@ -8,10 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import dynamic from "next/dynamic"
-
-// Dynamic import for RichTextEditor to avoid SSR issues
-const RichTextEditor = dynamic(() => import("@/components/ui/rich-text-editor"), { ssr: false })
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 
 interface Article {
   id: string
