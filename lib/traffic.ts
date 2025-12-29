@@ -19,9 +19,10 @@ export async function createTrafficSubUser(orderNo: string, durationHours: numbe
   const key = await getAPIKey();
   if (!key) throw new Error("高级接口密钥未配置");
 
-  // Format: HTStore + 6 Random Chars
+  // Distinguish between Timed (T) and Unlimited (U)
+  const typeIndicator = durationHours > 0 ? "T" : "U";
   const randomSuffix = Math.random().toString(36).slice(-6).toUpperCase();
-  const username = `HTStore${randomSuffix}`;
+  const username = `HTStore${typeIndicator}${randomSuffix}`;
   const pass = password || Math.random().toString(36).slice(-8);
 
   const res = await fetch(`${BASE_URL}/addSubUser`, {
@@ -83,7 +84,7 @@ export async function queryDailyRecords(username: string, start: string, end: st
 
   const params = new URLSearchParams({ 
     key, 
-    username, // Documentation says username is the parameter name
+    username, 
     start, 
     end 
   });
@@ -100,7 +101,7 @@ export async function queryHourlyRecords(username: string, start: string, end: s
 
   const params = new URLSearchParams({ 
     key, 
-    username, // Documentation says username is the parameter name
+    username, 
     start, 
     end 
   });
