@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
 import { sendOrderEmail } from "@/lib/mail";
+import { createTrafficSubUser } from "@/lib/traffic";
 
 // Manual Actions (e.g., Mark as Paid)
 export async function PATCH(
@@ -14,7 +15,10 @@ export async function PATCH(
     const { action } = await req.json(); // "MARK_PAID"
     const { id } = params;
 
-    const order = await prisma.order.findUnique({ where: { id } });
+    const order = await prisma.order.findUnique({ 
+      where: { id },
+      include: { product: true }
+    });
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
     if (action === "MARK_PAID") {
@@ -22,23 +26,56 @@ export async function PATCH(
 
        // Transactional manual fulfillment
        await prisma.$transaction(async (tx) => {
-         // Check stock
-         const licenses = await tx.license.findMany({
-           where: { productId: order.productId, status: "AVAILABLE" },
-           orderBy: { createdAt: 'asc' }, // FIFO: Use oldest licenses first
-           take: order.quantity
-         });
+         
+         if (order.product.isTrafficItem) {
+            // Traffic Item Logic
+            const account = await createTrafficSubUser(order.orderNo);
+            let expiresAt: Date | null = null;
+            if (order.product.trafficDuration > 0) {
+              expiresAt = new Date(Date.now() + order.product.trafficDuration * 3600000);
+            }
 
-         if (licenses.length < order.quantity) {
-           throw new Error("Insufficient stock to fulfill manually");
+            await tx.trafficAccount.create({
+              data: {
+                username: account.username,
+                password: account.password,
+                orderId: order.id,
+                expiresAt
+              }
+            });
+
+            const proxyHostSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_host" } });
+            const proxyPortSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_port" } });
+            const host = proxyHostSetting?.value || "proxy.example.com";
+            const port = proxyPortSetting?.value || "10000";
+
+            await tx.license.create({
+              data: {
+                code: `${host}:${port}:${account.username}:${account.password}`,
+                productId: order.productId,
+                orderId: order.id,
+                status: "SOLD"
+              }
+            });
+
+         } else {
+            // Standard Stock Logic
+            const licenses = await tx.license.findMany({
+              where: { productId: order.productId, status: "AVAILABLE" },
+              orderBy: { createdAt: 'asc' }, // FIFO: Use oldest licenses first
+              take: order.quantity
+            });
+
+            if (licenses.length < order.quantity) {
+              throw new Error("Insufficient stock to fulfill manually");
+            }
+
+            const licenseIds = licenses.map(l => l.id);
+            await tx.license.updateMany({
+              where: { id: { in: licenseIds } },
+              data: { status: "SOLD", orderId: order.id }
+            });
          }
-
-         // Update Licenses
-         const licenseIds = licenses.map(l => l.id);
-         await tx.license.updateMany({
-           where: { id: { in: licenseIds } },
-           data: { status: "SOLD", orderId: order.id }
-         });
 
          // Update Order
          await tx.order.update({

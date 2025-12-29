@@ -17,10 +17,11 @@ async function getAPIKey() {
 
 export async function createTrafficSubUser(orderNo: string, password?: string) {
   const key = await getAPIKey();
-  if (!key) throw new Error("Cliproxy API Key not configured");
+  if (!key) throw new Error("高级接口密钥未配置");
 
-  // Use orderNo as username (stripped of non-alphanumeric if needed)
-  const username = `u${orderNo.replace(/[^a-zA-Z0-9]/g, '').slice(-10)}`;
+  // Use HTStore prefix as requested
+  const randomSuffix = Math.random().toString(36).slice(-6).toUpperCase();
+  const username = `HTStore${randomSuffix}`;
   const pass = password || Math.random().toString(36).slice(-8);
 
   const res = await fetch(`${BASE_URL}/addSubUser`, {
@@ -30,14 +31,14 @@ export async function createTrafficSubUser(orderNo: string, password?: string) {
       key,
       username,
       password: pass,
-      traffic: "1", // 1GB as per requirement
+      traffic: "1", // Default 1GB
       title: `Order ${orderNo}`
     })
   });
 
   const data: APIResponse = await res.json();
   if (data.code !== 0) {
-    throw new Error(`Cliproxy API Error: ${data.msg}`);
+    throw new Error(`系统接口错误: ${data.msg}`);
   }
 
   return { username, password: pass };
@@ -60,7 +61,7 @@ export async function deleteTrafficSubUser(username: string) {
 
 export async function queryTrafficUsage(username: string) {
   const key = await getAPIKey();
-  if (!key) throw new Error("Cliproxy API Key not configured");
+  if (!key) throw new Error("高级接口密钥未配置");
 
   const res = await fetch(`${BASE_URL}/querySubUser`, {
     method: "POST",
