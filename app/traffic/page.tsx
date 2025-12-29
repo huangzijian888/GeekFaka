@@ -5,6 +5,7 @@ import { Navbar } from "@/components/navbar"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Search, Activity, Zap, Loader2, AlertCircle, BarChart3, LineChart } from "lucide-react"
 import { cn } from "@/lib/utils"
 import ReactECharts from "echarts-for-react"
@@ -163,28 +164,22 @@ export default function TrafficQueryPage() {
                   </TabsList>
                   
                   <TabsContent value="current" className="mt-6 space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">剩余流量</p>
-                        <p className="text-2xl font-black text-primary">{Number(result.traffic).toFixed(3)} <span className="text-sm font-medium text-muted-foreground">GB</span></p>
+                    <div className="p-8 text-center space-y-4 border-2 border-dashed border-primary/20 rounded-2xl bg-primary/5">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                        <Zap className="h-6 w-6 text-primary animate-pulse" />
                       </div>
-                      <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">总分配流量</p>
-                        <p className="text-2xl font-black">{Number(result.alltraffic).toFixed(3)} <span className="text-sm font-medium text-muted-foreground">GB</span></p>
+                      <div className="space-y-2">
+                        <h3 className="font-bold text-lg">实时统计升级中</h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed px-4">
+                          上游系统正在同步数据，该看板数据暂时不可用。<br/>
+                          请参考“<b>消耗趋势</b>”获取历史数据。
+                        </p>
                       </div>
-                    </div>
-
-                    <div className="relative pt-2 px-1">
-                       <div className="flex justify-between text-xs mb-2">
-                          <span className="text-muted-foreground font-medium">已使用进度</span>
-                          <span className="font-bold text-primary">{((1 - (Number(result.traffic) / Number(result.alltraffic))) * 100).toFixed(1)}%</span>
-                       </div>
-                       <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary transition-all duration-1000" 
-                            style={{ width: `${(1 - (Number(result.traffic) / Number(result.alltraffic))) * 100}%` }}
-                          />
-                       </div>
+                      <div className="pt-1">
+                        <Badge className="bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/10 text-[10px] px-2 py-0">
+                          账号状态: 正常
+                        </Badge>
+                      </div>
                     </div>
                   </TabsContent>
 
@@ -228,7 +223,7 @@ export default function TrafficQueryPage() {
                 </Tabs>
 
                 <div className="p-4 rounded-lg bg-yellow-500/5 border border-yellow-500/10 text-[11px] text-yellow-600/80 leading-relaxed text-center">
-                  提示：流量数据实时更新。如果剩余流量归零，账号将自动进入失效状态。
+                  提示：流量趋势图仅反映已结算的消耗记录。
                 </div>
               </div>
             )}
