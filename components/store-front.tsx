@@ -378,7 +378,7 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                     )}
                   </div>
                   {couponError && <p className="text-[10px] text-destructive ml-1">{couponError}</p>}
-                  {appliedCoupon && <p className="text-[10px] text-green-600 ml-1 font-medium flex items-center gap-1"><Ticket className="h-3 w-3" /> 已减免 ¥{appliedCoupon.discount.toFixed(2)}</p>}
+                  {appliedCoupon && <p className="text-[10px] text-green-600 ml-1 font-medium flex items-center gap-1"><Ticket className="h-3 w-3" /> 已减免 ¥{discount.toFixed(2)}</p>}
                 </div>
               </div>
 
