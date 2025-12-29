@@ -118,9 +118,10 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="payment" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+        <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
           <TabsTrigger value="payment">支付渠道</TabsTrigger>
           <TabsTrigger value="site">站点设置</TabsTrigger>
+          <TabsTrigger value="email">邮件通知</TabsTrigger>
         </TabsList>
         
         <TabsContent value="payment" className="space-y-4 mt-6">
@@ -242,6 +243,59 @@ export default function SettingsPage() {
                 />
                 <p className="text-xs text-muted-foreground">
                   设置新密码后，下次登录生效。若留空则保持当前密码不变。
+                </p>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                保存配置
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="email" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Resend 邮件服务</CardTitle>
+              <CardDescription>配置订单支付成功后的邮件通知</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/20">
+                <div className="space-y-0.5">
+                  <Label className="text-base">开启邮件通知</Label>
+                  <p className="text-xs text-muted-foreground">订单支付成功后自动发送卡密到客户邮箱</p>
+                </div>
+                <Switch 
+                  checked={draftConfig.resend_enabled === "true"}
+                  onCheckedChange={(checked) => handleChange("resend_enabled", String(checked))}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Resend API Key</Label>
+                <Input 
+                  type="password"
+                  value={draftConfig.resend_api_key || ""}
+                  onChange={e => handleChange("resend_api_key", e.target.value)}
+                  placeholder="re_xxxxxxxxxxxxxxxx"
+                  className="font-mono"
+                />
+                <p className="text-xs text-muted-foreground">
+                  从 <a href="https://resend.com/api-keys" target="_blank" className="underline hover:text-primary">Resend 控制台</a> 获取。
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>发件人邮箱 (From Email)</Label>
+                <Input 
+                  value={draftConfig.resend_from_email || ""}
+                  onChange={e => handleChange("resend_from_email", e.target.value)}
+                  placeholder="notifications@yourdomain.com"
+                />
+                <p className="text-xs text-muted-foreground">
+                  必须是在 Resend 中验证过的域名邮箱。如果是测试环境可填 onboarding@resend.dev。
                 </p>
               </div>
             </CardContent>

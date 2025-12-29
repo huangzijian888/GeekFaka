@@ -45,9 +45,9 @@ export function StoreFront({ categories }: { categories: Category[] }) {
   const [paymentMethod, setPaymentMethod] = useState("") 
   
   // Form State
-  const [contact, setContact] = useState("")
+  const [email, setEmail] = useState("")
   const [quantity, setQuantity] = useState(1)
-  const [contactError, setContactError] = useState("")
+  const [emailError, setEmailError] = useState("")
 
   // Derived State
   const selectedChannel = channels.find(c => c.id === paymentMethod)
@@ -69,12 +69,13 @@ export function StoreFront({ categories }: { categories: Category[] }) {
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (!isBuyOpen) {
-      setContactError("")
+      setEmailError("")
     }
   }, [isBuyOpen])
 
-  const validateContact = (val: string) => {
-    return val && val.trim().length > 0
+  const validateEmail = (val: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return re.test(val)
   }
 
   const handleBuyClick = (product: Product) => {
@@ -86,8 +87,8 @@ export function StoreFront({ categories }: { categories: Category[] }) {
   const handlePurchase = async () => {
     if (!selectedProduct) return
     
-    if (!validateContact(contact)) {
-      setContactError("请输入有效的联系方式")
+    if (!validateEmail(email)) {
+      setEmailError("请输入有效的邮箱地址，用于接收订单通知")
       return
     }
     
@@ -96,7 +97,7 @@ export function StoreFront({ categories }: { categories: Category[] }) {
       return
     }
 
-    setContactError("")
+    setEmailError("")
     setLoading(true)
 
     try {
@@ -107,7 +108,7 @@ export function StoreFront({ categories }: { categories: Category[] }) {
       const payload = {
         productId: selectedProduct.id,
         quantity,
-        email: contact, // Map contact to email field for backend compatibility
+        email: email, 
         paymentMethod: providerName, 
         options: {
           channel: paymentMethod === "wechat" ? "wxpay" : paymentMethod 
@@ -188,8 +189,6 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                          variant="outline" 
                          className="mt-4 border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
                          onClick={(e) => {
-                           // Allow click even if covering, but need to stop propagation if card has click handler
-                           // Here button handles it.
                            handleBuyClick(product)
                          }}
                        >
@@ -272,17 +271,16 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                 </h3>
                 
                 <div className="grid gap-2">
-                  <Label htmlFor="contact" className={cn(contactError && "text-destructive")}>
-                    联系方式 <span className="text-xs text-muted-foreground font-normal ml-1">(邮箱/QQ/手机号)</span>
-                    {contactError && <span className="text-xs font-normal ml-2 text-destructive">{contactError}</span>}
+                  <Label htmlFor="email" className={cn(emailError && "text-destructive")}>
+                    接收邮箱 {emailError && <span className="text-xs font-normal ml-2 text-destructive">{emailError}</span>}
                   </Label>
                   <Input
-                    id="contact"
-                    type="text"
-                    value={contact}
-                    onChange={(e) => setContact(e.target.value)}
-                    placeholder="请输入 邮箱 / QQ / 手机号"
-                    className={cn("bg-background", contactError && "border-destructive focus-visible:ring-destructive")}
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className={cn("bg-background", emailError && "border-destructive focus-visible:ring-destructive")}
                   />
                 </div>
 

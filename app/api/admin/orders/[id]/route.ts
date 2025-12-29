@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
+import { sendOrderEmail } from "@/lib/mail";
 
 // Manual Actions (e.g., Mark as Paid)
 export async function PATCH(
@@ -49,6 +50,9 @@ export async function PATCH(
            }
          });
        });
+
+       // Trigger email notification in background
+       sendOrderEmail(order.orderNo).catch(console.error);
 
        return NextResponse.json({ success: true });
     }

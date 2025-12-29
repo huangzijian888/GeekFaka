@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPaymentAdapter } from "@/lib/payments/registry";
 import { logger } from "@/lib/logger";
+import { sendOrderEmail } from "@/lib/mail";
 
 export async function GET(req: Request) {
   // EPay notifications are usually GET requests, but verify based on your gateway
@@ -93,6 +94,9 @@ async function processNotification(data: any, req?: Request) {
         });
         log.info("Order successfully fulfilled");
       });
+
+      // Send Email Notification (Background task in Next.js)
+      sendOrderEmail(callbackData.orderNo).catch(e => log.error({ err: e }, "Email background task failed"));
     }
 
     return new NextResponse("success");
