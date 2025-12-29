@@ -48,8 +48,19 @@ export async function POST(req: Request) {
       if (!coupon || coupon.isUsed) {
         return NextResponse.json({ error: "优惠码无效或已被使用" }, { status: 400 });
       }
+
+      // Check product binding
+      if (coupon.productId && coupon.productId !== productId) {
+        return NextResponse.json({ error: "该优惠码不适用于此商品" }, { status: 400 });
+      }
       
-      discountAmount = Number(coupon.discount);
+      const subtotal = Number(product.price) * quantity;
+      if (coupon.discountType === "PERCENTAGE") {
+        discountAmount = subtotal * (Number(coupon.discountValue) / 100);
+      } else {
+        discountAmount = Number(coupon.discountValue);
+      }
+      
       validCouponId = coupon.id;
     }
 

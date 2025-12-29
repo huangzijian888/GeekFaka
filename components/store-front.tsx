@@ -52,15 +52,28 @@ export function StoreFront({ categories }: { categories: Category[] }) {
   // Coupon State
   const [couponCode, setCouponCode] = useState("")
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string, discount: number } | null>(null)
+  const [appliedCoupon, setAppliedCoupon] = useState<{ 
+    code: string, 
+    discountType: "FIXED" | "PERCENTAGE", 
+    discountValue: number 
+  } | null>(null)
   const [couponError, setCouponError] = useState("")
 
   // Derived State
   const selectedChannel = channels.find(c => c.id === paymentMethod)
   const subtotal = selectedProduct ? Number(selectedProduct.price) * quantity : 0
-  const discount = appliedCoupon ? appliedCoupon.discount : 0
-  const productTotal = Math.max(0, subtotal - discount)
   
+  // Calculate discount
+  let discount = 0
+  if (appliedCoupon) {
+    if (appliedCoupon.discountType === "PERCENTAGE") {
+      discount = subtotal * (appliedCoupon.discountValue / 100)
+    } else {
+      discount = appliedCoupon.discountValue
+    }
+  }
+
+  const productTotal = Math.max(0, subtotal - discount)
   const feePercent = selectedChannel?.fee || 0
   const feeAmount = productTotal * (feePercent / 100)
   const finalTotal = productTotal + feeAmount
@@ -104,7 +117,11 @@ export function StoreFront({ categories }: { categories: Category[] }) {
       const data = await res.json()
       
       if (res.ok) {
-        setAppliedCoupon({ code: data.code, discount: Number(data.discount) })
+        setAppliedCoupon({ 
+          code: data.code, 
+          discountType: data.discountType, 
+          discountValue: Number(data.discountValue) 
+        })
       } else {
         setCouponError(data.error || "无效的优惠码")
         setAppliedCoupon(null)

@@ -43,6 +43,7 @@ model Product {
   category       Category  @relation(fields: [categoryId], references: [id])
   licenses       License[]
   orders         Order[]
+  coupons        Coupon[]
   deliveryFormat String    @default("SINGLE") // SINGLE, ACCOUNT_PASS, ACCOUNT_FULL
   isActive       Boolean   @default(true)
   createdAt      DateTime  @default(now())
@@ -81,13 +82,16 @@ model Order {
 }
 
 model Coupon {
-  id        String    @id @default(cuid())
-  code      String    @unique
-  discount  Decimal   // Fixed discount amount
-  isUsed    Boolean   @default(false)
-  order     Order?
-  createdAt DateTime  @default(now())
-  usedAt    DateTime?
+  id             String    @id @default(cuid())
+  code           String    @unique
+  discountType   String    @default("FIXED") // FIXED, PERCENTAGE
+  discountValue  Decimal
+  productId      String?   // Optional: only valid for this product
+  product        Product?  @relation(fields: [productId], references: [id])
+  isUsed         Boolean   @default(false)
+  order          Order?
+  createdAt      DateTime  @default(now())
+  usedAt         DateTime?
 }
 
 model Article {

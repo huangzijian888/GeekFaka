@@ -19,12 +19,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "该优惠码已被使用" }, { status: 400 });
     }
 
-    // Optional: add logic here if coupon is tied to specific products
+    // Check if coupon is bound to a specific product
+    if (coupon.productId && coupon.productId !== productId) {
+      return NextResponse.json({ error: "该优惠码不适用于此商品" }, { status: 400 });
+    }
     
     return NextResponse.json({ 
       id: coupon.id,
       code: coupon.code,
-      discount: coupon.discount
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue
     });
 
   } catch (error) {

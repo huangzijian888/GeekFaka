@@ -7,7 +7,10 @@ export async function GET() {
 
   const coupons = await prisma.coupon.findMany({
     orderBy: { createdAt: "desc" },
-    include: { order: { select: { orderNo: true } } }
+    include: { 
+      order: { select: { orderNo: true } },
+      product: { select: { name: true } }
+    }
   });
 
   return NextResponse.json(coupons);
@@ -17,16 +20,18 @@ export async function POST(req: Request) {
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
   try {
-    const { code, discount } = await req.json();
+    const { code, discountValue, discountType, productId } = await req.json();
 
-    if (!code || !discount) {
+    if (!code || !discountValue) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
     const coupon = await prisma.coupon.create({
       data: {
         code: code.trim().toUpperCase(),
-        discount: parseFloat(discount),
+        discountValue: parseFloat(discountValue),
+        discountType: discountType || "FIXED",
+        productId: productId || null,
         isUsed: false
       }
     });
