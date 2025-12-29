@@ -29,6 +29,8 @@ interface Product {
   category: Category
   isActive: boolean
   deliveryFormat: string
+  isTrafficItem: boolean
+  trafficDuration: number
   _count: {
     licenses: number
   }
@@ -52,7 +54,9 @@ export default function ProductsPage() {
     description: "",
     price: "",
     categoryId: "",
-    deliveryFormat: "SINGLE"
+    deliveryFormat: "SINGLE",
+    isTrafficItem: false,
+    trafficDuration: 0
   })
 
   useEffect(() => {
@@ -85,7 +89,9 @@ export default function ProductsPage() {
         description: product.description || "",
         price: product.price,
         categoryId: product.categoryId,
-        deliveryFormat: product.deliveryFormat || "SINGLE"
+        deliveryFormat: product.deliveryFormat || "SINGLE",
+        isTrafficItem: product.isTrafficItem || false,
+        trafficDuration: product.trafficDuration || 0
       })
     } else {
       setEditingProduct(null)
@@ -94,7 +100,9 @@ export default function ProductsPage() {
         description: "",
         price: "",
         categoryId: categories[0]?.id || "",
-        deliveryFormat: "SINGLE"
+        deliveryFormat: "SINGLE",
+        isTrafficItem: false,
+        trafficDuration: 0
       })
     }
     setIsDialogOpen(true)
