@@ -85,7 +85,7 @@ model Coupon {
   id             String    @id @default(cuid())
   code           String    @unique
   discountType   String    @default("FIXED") // FIXED, PERCENTAGE
-  discountValue  Decimal   @default(0)
+  discountValue  Decimal?  @default(0)
   productId      String?   // Optional: only valid for this product
   product        Product?  @relation(fields: [productId], references: [id])
   isUsed         Boolean   @default(false)
