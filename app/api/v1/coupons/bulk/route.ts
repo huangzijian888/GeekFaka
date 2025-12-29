@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { crypto } from "crypto";
 
 const DEFAULT_API_KEY = "geekfaka_default_secret_key";
 
