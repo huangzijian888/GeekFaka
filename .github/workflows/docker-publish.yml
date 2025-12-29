@@ -3,7 +3,7 @@ name: Docker Build and Publish
 on:
   push:
     branches: [ "main", "business" ]
-    # Support v1.0.0, 1.0.0, and business tags
+    # Support various tag patterns
     tags: [ '*.*.*', 'v*.*.*', '*-business' ]
   pull_request:
     branches: [ "main" ]
@@ -11,8 +11,8 @@ on:
 
 env:
   REGISTRY: docker.io
-  # Correctly detect business builds via branch name or tag suffix
-  DOCKER_IMAGE: ${{ (github.ref == 'refs/heads/business' || contains(github.ref, '-business')) && 'huangzijian888/ht-store' || 'huangzijian888/GeekFaka' }}
+  # Detect image name based on the current GitHub Repository
+  DOCKER_IMAGE: ${{ github.repository == 'huangzijian888/HTStore' && 'huangzijian888/ht-store' || 'huangzijian888/GeekFaka' }}
 
 jobs:
   build:
