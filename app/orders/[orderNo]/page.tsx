@@ -324,6 +324,7 @@ export default function OrderPage({ params }: { params: { orderNo: string } }) {
                        code={license.code} 
                        index={index} 
                        format={order.product.deliveryFormat} 
+                       isTraffic={order.product.isTrafficItem}
                      />
                    ))}
                  </div>
