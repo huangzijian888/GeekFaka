@@ -30,20 +30,20 @@ interface Order {
   createdAt: any
 }
 
-function LicenseItem({ code, index, format }: { code: string, index: number, format: string }) {
+function CopyableField({ label, value, icon: Icon }: { label: string, value: string, icon?: any }) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const renderField = (label: string, value: string, icon?: any) => (
-    <div key={label} className="space-y-1.5">
+  return (
+    <div className="space-y-1.5">
       <div className="flex justify-between items-center px-1">
         <span className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1">
-          {icon && React.createElement(icon, { className: "h-3 w-3" })}
+          {Icon && <Icon className="h-3 w-3" />}
           {label}
         </span>
       </div>
@@ -53,12 +53,22 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
           value={value} 
           className="bg-background/50 font-mono text-sm h-9 border-primary/10 focus-visible:ring-0 focus-visible:border-primary/30" 
         />
-        <Button variant="secondary" size="icon" className="h-9 w-9 shrink-0 hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => handleCopy(value)}>
-          <Copy className="h-3.5 w-3.5" />
+        <Button variant="secondary" size="icon" className="h-9 w-9 shrink-0 hover:bg-primary/10 hover:text-primary transition-colors" onClick={handleCopy}>
+          {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
         </Button>
       </div>
     </div>
   );
+}
+
+function LicenseItem({ code, index, format }: { code: string, index: number, format: string }) {
+  const [fullCopied, setFullCopied] = useState(false);
+
+  const handleCopyFull = () => {
+    navigator.clipboard.writeText(code);
+    setFullCopied(true);
+    setTimeout(() => setFullCopied(false), 2000);
+  };
 
   // Normal / SINGLE format
   if (format === "SINGLE" || !format) {
@@ -66,8 +76,8 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
       <div className="group bg-muted/30 p-4 rounded-xl border border-border/50 hover:border-primary/30 transition-all">
         <div className="flex justify-between items-center mb-2">
           <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">卡密 #{index + 1}</span>
-          <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleCopy(code)}>
-            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+          <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={handleCopyFull}>
+            {fullCopied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
           </Button>
         </div>
         <code className="block bg-background/80 p-4 rounded-lg border font-mono text-lg break-all select-all text-primary font-bold">
@@ -89,13 +99,15 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
       <div className="group bg-muted/30 p-5 rounded-xl border border-border/50 hover:border-primary/30 transition-all space-y-4">
         <div className="flex justify-between items-center">
           <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">账号信息 #{index + 1}</span>
-          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 px-2 border-primary/20 hover:border-primary/50" onClick={() => handleCopy(code)}>
-            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 px-2 border-primary/20 hover:border-primary/50" onClick={handleCopyFull}>
+            {fullCopied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
             复制完整格式
           </Button>
         </div>
         <div className="grid grid-cols-1 gap-3">
-          {labels.map((label, i) => parts[i] && renderField(label, parts[i], icons[i]))}
+          {labels.map((label, i) => parts[i] && (
+            <CopyableField key={label} label={label} value={parts[i]} icon={icons[i]} />
+          ))}
         </div>
       </div>
     );
@@ -111,13 +123,15 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
       <div className="group bg-muted/30 p-5 rounded-xl border border-border/50 hover:border-primary/30 transition-all space-y-4">
         <div className="flex justify-between items-center">
           <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">虚拟卡信息 #{index + 1}</span>
-          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 px-2 border-primary/20 hover:border-primary/50" onClick={() => handleCopy(code)}>
-            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 px-2 border-primary/20 hover:border-primary/50" onClick={handleCopyFull}>
+            {fullCopied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
             复制完整格式
           </Button>
         </div>
         <div className="grid grid-cols-1 gap-3">
-          {labels.map((label, i) => parts[i] && renderField(label, parts[i], icons[i]))}
+          {labels.map((label, i) => parts[i] && (
+            <CopyableField key={label} label={label} value={parts[i]} icon={icons[i]} />
+          ))}
         </div>
       </div>
     );
@@ -133,13 +147,15 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
       <div className="group bg-muted/30 p-5 rounded-xl border border-border/50 hover:border-primary/30 transition-all space-y-4">
         <div className="flex justify-between items-center">
           <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">代理信息 #{index + 1}</span>
-          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 px-2 border-primary/20 hover:border-primary/50" onClick={() => handleCopy(code)}>
-            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 px-2 border-primary/20 hover:border-primary/50" onClick={handleCopyFull}>
+            {fullCopied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
             复制完整格式
           </Button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {labels.map((label, i) => parts[i] && renderField(label, parts[i], icons[i]))}
+          {labels.map((label, i) => parts[i] && (
+            <CopyableField key={label} label={label} value={parts[i]} icon={icons[i]} />
+          ))}
         </div>
       </div>
     );
