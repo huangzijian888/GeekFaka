@@ -76,3 +76,25 @@ export async function queryTrafficUsage(username: string) {
   }
   return null;
 }
+
+// New: Fetch daily records
+export async function queryDailyRecords(username: string, start: string, end: string) {
+  const key = await getAPIKey();
+  if (!key) return null;
+
+  const params = new URLSearchParams({ key, username, start, end });
+  const res = await fetch(`${BASE_URL}/allRecords?${params.toString()}`);
+  const data: APIResponse = await res.json();
+  return data.code === 0 ? data.data : [];
+}
+
+// New: Fetch hourly records
+export async function queryHourlyRecords(username: string, start: string, end: string) {
+  const key = await getAPIKey();
+  if (!key) return null;
+
+  const params = new URLSearchParams({ key, username, start, end });
+  const res = await fetch(`${BASE_URL}/records?${params.toString()}`);
+  const data: APIResponse = await res.json();
+  return data.code === 0 ? data.data : [];
+}
