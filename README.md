@@ -11,10 +11,10 @@
 ![Checkout](images/buy.png)
 
 ### 现代化仪表盘 (ECharts)
-![Dashboard](https://github.com/user-attachments/assets/8f5dd6f-stats)
+*(支持可视化收入趋势图、今日数据统计与缺货预警)*
 
 ### 智能公告系统
-![Announcement](https://github.com/user-attachments/assets/c914827-design)
+*(支持全屏自动弹窗、窄幅滚动条、Markdown 格式渲染)*
 
 ## ✨ 核心特性
 
