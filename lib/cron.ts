@@ -9,10 +9,8 @@ export function initCronTasks() {
   log.info("Initializing background cron tasks...");
 
   // Task 1: Clean up expired traffic accounts
-  // Run every hour at the 0th minute
-  cron.schedule('0 * * * *', async () => {
-    log.info("Running expired traffic account cleanup...");
-    
+  // Run every minute for maximum precision
+  cron.schedule('* * * * *', async () => {
     try {
       const now = new Date();
       
@@ -27,11 +25,10 @@ export function initCronTasks() {
       });
 
       if (expiredAccounts.length === 0) {
-        log.info("No expired accounts found.");
-        return;
+        return; // Silent return to keep logs clean when nothing to do
       }
 
-      log.info({ count: expiredAccounts.length }, "Found expired accounts to remove");
+      log.info({ count: expiredAccounts.length }, "Running expired traffic account cleanup...");
 
       // 2. Delete from upstream and local DB
       for (const account of expiredAccounts) {

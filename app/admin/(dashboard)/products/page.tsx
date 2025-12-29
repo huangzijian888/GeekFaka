@@ -370,6 +370,33 @@ export default function ProductsPage() {
                   <p className="text-[10px] text-muted-foreground">影响用户查收卡密时的展示方式</p>
                 </div>
 
+                <div className="pt-2 space-y-4 border-t border-border/50">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>流量商品</Label>
+                      <p className="text-[10px] text-muted-foreground">支付后自动在代理服务器开户</p>
+                    </div>
+                    <Switch 
+                      checked={formData.isTrafficItem}
+                      onCheckedChange={(val) => setFormData({ ...formData, isTrafficItem: val })}
+                    />
+                  </div>
+
+                  {formData.isTrafficItem && (
+                    <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
+                      <Label htmlFor="trafficDuration">有效期 (小时)</Label>
+                      <Input
+                        id="trafficDuration"
+                        type="number"
+                        value={formData.trafficDuration}
+                        onChange={(e) => setFormData({ ...formData, trafficDuration: parseInt(e.target.value) || 0 })}
+                        placeholder="0 为不限期"
+                      />
+                      <p className="text-[10px] text-muted-foreground italic">设置为 24 则到期后系统自动销户</p>
+                    </div>
+                  )}
+                </div>
+
                 <div className="pt-4">
                    <p className="text-xs text-muted-foreground leading-relaxed">
                      提示：<br/>
