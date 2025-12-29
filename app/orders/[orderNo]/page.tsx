@@ -22,6 +22,7 @@ interface Order {
   product: {
     name: string
     deliveryFormat: string
+    isTrafficItem: boolean
   }
   licenses: {
     id: string
@@ -61,7 +62,7 @@ function CopyableField({ label, value, icon: Icon }: { label: string, value: str
   );
 }
 
-function LicenseItem({ code, index, format }: { code: string, index: number, format: string }) {
+function LicenseItem({ code, index, format, isTraffic }: { code: string, index: number, format: string, isTraffic: boolean }) {
   const [fullCopied, setFullCopied] = useState(false);
 
   const handleCopyFull = () => {
@@ -70,8 +71,11 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
     setTimeout(() => setFullCopied(false), 2000);
   };
 
+  // OVERRIDE: If it's a traffic item, force PROXY_IP rendering style
+  const effectiveFormat = isTraffic ? "PROXY_IP" : format;
+
   // Normal / SINGLE format
-  if (format === "SINGLE" || !format) {
+  if (effectiveFormat === "SINGLE" || !effectiveFormat) {
     return (
       <div className="group bg-muted/30 p-4 rounded-xl border border-border/50 hover:border-primary/30 transition-all">
         <div className="flex justify-between items-center mb-2">
@@ -88,9 +92,9 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
   }
 
   // Account formats (using ----)
-  if (format.startsWith("ACCOUNT_")) {
+  if (effectiveFormat.startsWith("ACCOUNT_")) {
     const parts = code.split("----");
-    const labels = format === "ACCOUNT_FULL" 
+    const labels = effectiveFormat === "ACCOUNT_FULL" 
       ? ["账号", "密码", "辅助邮箱", "2FA 密钥"] 
       : ["账号", "密码"];
     const icons = [User, ShieldCheck, Mail, Key];
@@ -114,7 +118,7 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
   }
 
   // Virtual Card format (using |)
-  if (format === "VIRTUAL_CARD") {
+  if (effectiveFormat === "VIRTUAL_CARD") {
     const parts = code.split("|");
     const labels = ["卡号", "有效期 (月/年)", "CVV 安全码"];
     const icons = [CreditCard, Clock, ShieldCheck];
@@ -138,7 +142,7 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
   }
 
   // Proxy IP format (using :)
-  if (format === "PROXY_IP") {
+  if (effectiveFormat === "PROXY_IP") {
     const parts = code.split(":");
     const labels = ["主机 (Host)", "端口 (Port)", "用户 (User)", "密码 (Pass)"];
     const icons = [Globe, Hash, User, ShieldCheck];

@@ -3,7 +3,7 @@ version: '3'
 services:
   geekfaka:
     container_name: geekfaka-app
-    image: huangzijian888/geekfaka:latest
+    image: huangzijian888/ht-store:latest
     restart: always
     ports:
       - "3000:3000"
