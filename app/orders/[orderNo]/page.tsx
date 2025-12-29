@@ -40,7 +40,7 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
   };
 
   const renderField = (label: string, value: string, icon?: any) => (
-    <div className="space-y-1.5">
+    <div key={label} className="space-y-1.5">
       <div className="flex justify-between items-center px-1">
         <span className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1">
           {icon && React.createElement(icon, { className: "h-3 w-3" })}
@@ -117,6 +117,28 @@ function LicenseItem({ code, index, format }: { code: string, index: number, for
           </Button>
         </div>
         <div className="grid grid-cols-1 gap-3">
+          {labels.map((label, i) => parts[i] && renderField(label, parts[i], icons[i]))}
+        </div>
+      </div>
+    );
+  }
+
+  // Proxy IP format (using :)
+  if (format === "PROXY_IP") {
+    const parts = code.split(":");
+    const labels = ["主机 (Host)", "端口 (Port)", "用户 (User)", "密码 (Pass)"];
+    const icons = [Globe, Hash, User, ShieldCheck];
+
+    return (
+      <div className="group bg-muted/30 p-5 rounded-xl border border-border/50 hover:border-primary/30 transition-all space-y-4">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">代理信息 #{index + 1}</span>
+          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 px-2 border-primary/20 hover:border-primary/50" onClick={() => handleCopy(code)}>
+            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+            复制完整格式
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {labels.map((label, i) => parts[i] && renderField(label, parts[i], icons[i]))}
         </div>
       </div>

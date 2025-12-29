@@ -356,6 +356,7 @@ export default function ProductsPage() {
                       <SelectItem value="ACCOUNT_PASS">账号----密码</SelectItem>
                       <SelectItem value="ACCOUNT_FULL">账号----密码----辅助邮箱----2FA</SelectItem>
                       <SelectItem value="VIRTUAL_CARD">虚拟卡 (卡号|月/年|CVV)</SelectItem>
+                      <SelectItem value="PROXY_IP">代理IP (主机:端口:用户:密码)</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-[10px] text-muted-foreground">影响用户查收卡密时的展示方式</p>
