@@ -23,6 +23,17 @@ export async function POST(req: Request) {
     if (coupon.productId && coupon.productId !== productId) {
       return NextResponse.json({ error: "该优惠码不适用于此商品" }, { status: 400 });
     }
+
+    // Check if coupon is bound to a specific category
+    if (coupon.categoryId) {
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { categoryId: true }
+      });
+      if (product?.categoryId !== coupon.categoryId) {
+        return NextResponse.json({ error: "该优惠码不适用于此分类下的商品" }, { status: 400 });
+      }
+    }
     
     return NextResponse.json({ 
       id: coupon.id,

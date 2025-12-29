@@ -31,6 +31,7 @@ model Category {
   slug      String    @unique
   priority  Int       @default(0)
   products  Product[]
+  coupons   Coupon[]
   createdAt DateTime  @default(now())
 }
 
@@ -88,6 +89,8 @@ model Coupon {
   discountValue  Decimal?  @default(0)
   productId      String?   // Optional: only valid for this product
   product        Product?  @relation(fields: [productId], references: [id])
+  categoryId     String?   // Optional: only valid for this category
+  category       Category? @relation(fields: [categoryId], references: [id])
   isUsed         Boolean   @default(false)
   order          Order?
   createdAt      DateTime  @default(now())

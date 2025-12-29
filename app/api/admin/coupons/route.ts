@@ -9,7 +9,8 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
     include: { 
       order: { select: { orderNo: true } },
-      product: { select: { name: true } }
+      product: { select: { name: true } },
+      category: { select: { name: true } }
     }
   });
 
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
   try {
-    const { code, discountValue, discountType, productId } = await req.json();
+    const { code, discountValue, discountType, productId, categoryId } = await req.json();
 
     if (!code || !discountValue) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
         discountValue: parseFloat(discountValue),
         discountType: discountType || "FIXED",
         productId: productId || null,
+        categoryId: categoryId || null,
         isUsed: false
       }
     });

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Trash2, Ticket, Loader2, CheckCircle2, XCircle, Percent, Coins } from "lucide-react"
+import { Plus, Trash2, Ticket, Loader2, CheckCircle2, XCircle, Percent, Coins, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -15,6 +15,11 @@ interface Product {
   name: string
 }
 
+interface Category {
+  id: string
+  name: string
+}
+
 interface Coupon {
   id: string
   code: string
@@ -23,6 +28,8 @@ interface Coupon {
   isUsed: boolean
   productId: string | null
   product?: { name: string }
+  categoryId: string | null
+  category?: { name: string }
   createdAt: string
   usedAt: string | null
   order?: { orderNo: string }
@@ -31,22 +38,46 @@ interface Coupon {
 export default function CouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
+  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null)
   
   // Form State
   const [formData, setFormData] = useState({
     code: "",
     discountValue: "",
     discountType: "FIXED" as "FIXED" | "PERCENTAGE",
-    productId: "ALL" // "ALL" means global coupon
+    scopeType: "ALL" as "ALL" | "PRODUCT" | "CATEGORY",
+    productId: "",
+    categoryId: ""
   })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetchCoupons()
     fetchProducts()
+    fetchCategories()
   }, [])
+
+  useEffect(() => {
+    if (editingCoupon) {
+      let scopeType: "ALL" | "PRODUCT" | "CATEGORY" = "ALL";
+      if (editingCoupon.productId) scopeType = "PRODUCT";
+      else if (editingCoupon.categoryId) scopeType = "CATEGORY";
+
+      setFormData({
+        code: editingCoupon.code,
+        discountValue: editingCoupon.discountValue || "0",
+        discountType: editingCoupon.discountType,
+        scopeType,
+        productId: editingCoupon.productId || "",
+        categoryId: editingCoupon.categoryId || ""
+      })
+    } else {
+      setFormData({ code: "", discountValue: "", discountType: "FIXED", scopeType: "ALL", productId: "", categoryId: "" })
+    }
+  }, [editingCoupon])
 
   const fetchCoupons = async () => {
     setLoading(true)
@@ -71,21 +102,38 @@ export default function CouponsPage() {
     }
   }
 
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/admin/categories")
+      const data = await res.json()
+      setCategories(data)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     try {
-      const res = await fetch("/api/admin/coupons", {
-        method: "POST",
+      const url = editingCoupon ? `/api/admin/coupons/${editingCoupon.id}` : "/api/admin/coupons";
+      const method = editingCoupon ? "PATCH" : "POST";
+
+      const payload = {
+        code: formData.code,
+        discountType: formData.discountType,
+        discountValue: formData.discountValue,
+        productId: formData.scopeType === "PRODUCT" ? formData.productId : null,
+        categoryId: formData.scopeType === "CATEGORY" ? formData.categoryId : null,
+      }
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          productId: formData.productId === "ALL" ? null : formData.productId
-        })
+        body: JSON.stringify(payload)
       })
 
       if (res.ok) {
         setIsOpen(false)
-        setFormData({ code: "", discountValue: "", discountType: "FIXED", productId: "ALL" })
         fetchCoupons()
       } else {
         const data = await res.json()
@@ -122,9 +170,9 @@ export default function CouponsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">优惠码管理</h1>
-          <p className="text-muted-foreground">创建通用或指定商品的一次性折扣券</p>
+          <p className="text-muted-foreground">创建通用、分类或指定商品的一次性折扣券</p>
         </div>
-        <Button onClick={() => setIsOpen(true)}>
+        <Button onClick={() => { setEditingCoupon(null); setIsOpen(true); }}>
           <Plus className="mr-2 h-4 w-4" /> 新建优惠码
         </Button>
       </div>
@@ -136,7 +184,7 @@ export default function CouponsPage() {
               <TableHead>优惠码</TableHead>
               <TableHead>类型</TableHead>
               <TableHead>面值</TableHead>
-              <TableHead>适用商品</TableHead>
+              <TableHead>适用范围</TableHead>
               <TableHead>状态</TableHead>
               <TableHead className="text-right">操作</TableHead>
             </TableRow>
@@ -160,7 +208,7 @@ export default function CouponsPage() {
                   <TableCell className="font-mono font-bold text-primary">{coupon.code}</TableCell>
                   <TableCell>
                     {coupon.discountType === "PERCENTAGE" ? (
-                      <span className="flex items-center gap-1 text-xs"><Percent className="h-3 w-3" /> 百比比</span>
+                      <span className="flex items-center gap-1 text-xs"><Percent className="h-3 w-3" /> 百分比</span>
                     ) : (
                       <span className="flex items-center gap-1 text-xs"><Coins className="h-3 w-3" /> 固定金额</span>
                     )}
@@ -172,9 +220,11 @@ export default function CouponsPage() {
                   </TableCell>
                   <TableCell>
                     {coupon.product ? (
-                      <Badge variant="outline" className="font-normal">{coupon.product.name}</Badge>
+                      <Badge variant="outline" className="font-normal border-blue-500/30 text-blue-400">商品: {coupon.product.name}</Badge>
+                    ) : coupon.category ? (
+                      <Badge variant="outline" className="font-normal border-purple-500/30 text-purple-400">分类: {coupon.category.name}</Badge>
                     ) : (
-                      <span className="text-muted-foreground text-xs">通用</span>
+                      <span className="text-muted-foreground text-xs">全站通用</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -189,9 +239,14 @@ export default function CouponsPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(coupon.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => { setEditingCoupon(coupon); setIsOpen(true); }}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(coupon.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -203,7 +258,7 @@ export default function CouponsPage() {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>新建优惠码</DialogTitle>
+            <DialogTitle>{editingCoupon ? "编辑优惠码" : "新建优惠码"}</DialogTitle>
             <DialogDescription>
               创建一个一次性的折扣券。
             </DialogDescription>
@@ -219,7 +274,7 @@ export default function CouponsPage() {
                   placeholder="例如：DISCOUNT10"
                   className="font-mono"
                 />
-                <Button variant="outline" onClick={generateRandomCode} type="button">随机</Button>
+                {!editingCoupon && <Button variant="outline" onClick={generateRandomCode} type="button">随机</Button>}
               </div>
             </div>
 
@@ -252,29 +307,66 @@ export default function CouponsPage() {
             </div>
 
             <div className="grid gap-2">
-              <Label>适用商品</Label>
+              <Label>适用范围</Label>
               <Select 
-                value={formData.productId} 
-                onValueChange={(val) => setFormData({ ...formData, productId: val })}
+                value={formData.scopeType} 
+                onValueChange={(val: any) => setFormData({ ...formData, scopeType: val })}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="请选择商品" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">全站通用</SelectItem>
-                  {products.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
+                  <SelectItem value="PRODUCT">指定商品</SelectItem>
+                  <SelectItem value="CATEGORY">指定分类</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {formData.scopeType === "PRODUCT" && (
+              <div className="grid gap-2">
+                <Label>选择商品</Label>
+                <Select 
+                  value={formData.productId} 
+                  onValueChange={(val) => setFormData({ ...formData, productId: val })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择商品" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {formData.scopeType === "CATEGORY" && (
+              <div className="grid gap-2">
+                <Label>选择分类</Label>
+                <Select 
+                  value={formData.categoryId} 
+                  onValueChange={(val) => setFormData({ ...formData, categoryId: val })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择分类" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsOpen(false)}>取消</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              立即创建
+              {editingCoupon ? "保存修改" : "立即创建"}
             </Button>
           </DialogFooter>
         </DialogContent>
