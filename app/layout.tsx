@@ -29,7 +29,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className={inter.className}>
         {children}
         <CustomerService crispId={crispId} />
