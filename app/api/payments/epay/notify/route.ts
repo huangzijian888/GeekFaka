@@ -74,7 +74,7 @@ async function processNotification(data: any, req?: Request) {
             expiresAt = new Date(Date.now() + order.product.trafficDuration * 3600000);
           }
 
-          // 3. Create TrafficAccount record (Using original username for DB)
+          // 3. Create TrafficAccount record
           await tx.trafficAccount.create({
             data: {
               username: account.username,
@@ -85,9 +85,12 @@ async function processNotification(data: any, req?: Request) {
           });
 
           // 4. Create a virtual license for display
-          // Fixed host/port and username with region suffix
-          const host = "us.arxlabs.io";
-          const port = "3010";
+          // FETCH dynamic host/port from settings
+          const proxyHostSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_host" } });
+          const proxyPortSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_port" } });
+          const host = proxyHostSetting?.value || "us.arxlabs.io";
+          const port = proxyPortSetting?.value || "3010";
+          
           const formattedUsername = `${account.username}-region-US`;
 
           await tx.license.create({

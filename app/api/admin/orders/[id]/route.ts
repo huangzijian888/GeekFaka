@@ -44,9 +44,12 @@ export async function PATCH(
               }
             });
 
-            // FIXED Host/Port and formatted username
-            const host = "us.arxlabs.io";
-            const port = "3010";
+            // FETCH dynamic host/port from settings
+            const proxyHostSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_host" } });
+            const proxyPortSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_port" } });
+            const host = proxyHostSetting?.value || "us.arxlabs.io";
+            const port = proxyPortSetting?.value || "3010";
+
             const formattedUsername = `${account.username}-region-US`;
 
             await tx.license.create({
