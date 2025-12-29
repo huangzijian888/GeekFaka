@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit2, Trash2, Loader2, PackageOpen, Key } from "lucide-react"
+import { Plus, Edit2, Trash2, Loader2, PackageOpen, Key, ChevronLeft, ChevronRight, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Switch } from "@/components/ui/switch"
@@ -40,6 +40,11 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [submitLoading, setSubmitLoading] = useState(false)
   
+  // Filter & Pagination State
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [selectedCategory, setSelectedCategory] = useState("all")
+
   // Stock State
   const [stockProduct, setStockProduct] = useState<Product | null>(null)
   const [isStockOpen, setIsStockOpen] = useState(false)
@@ -57,19 +62,32 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [page, selectedCategory])
 
   const fetchData = async () => {
     setLoading(true)
     try {
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+        categoryId: selectedCategory
+      })
+
       const [prodRes, catRes] = await Promise.all([
-        fetch("/api/admin/products"),
+        fetch(`/api/admin/products?${queryParams}`),
         fetch("/api/admin/categories")
       ])
+      
       const prodData = await prodRes.json()
       const catData = await catRes.json()
-      setProducts(prodData)
-      setCategories(catData)
+      
+      if (prodRes.ok) {
+        setProducts(prodData.products || [])
+        setTotalPages(prodData.pagination?.pages || 1)
+      }
+      if (catRes.ok) {
+        setCategories(catData)
+      }
     } catch (error) {
       console.error(error)
     } finally {
@@ -155,14 +173,32 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">商品管理</h1>
           <p className="text-muted-foreground">创建、编辑商品并管理库存</p>
         </div>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="mr-2 h-4 w-4" /> 新增商品
-        </Button>
+        <div className="flex items-center gap-2">
+           <div className="w-[180px]">
+             <Select value={selectedCategory} onValueChange={(val) => { setPage(1); setSelectedCategory(val); }}>
+               <SelectTrigger>
+                 <div className="flex items-center gap-2">
+                   <Filter className="h-4 w-4 text-muted-foreground" />
+                   <SelectValue placeholder="全部分类" />
+                 </div>
+               </SelectTrigger>
+               <SelectContent>
+                 <SelectItem value="all">全部分类</SelectItem>
+                 {categories.map(cat => (
+                   <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                 ))}
+               </SelectContent>
+             </Select>
+           </div>
+           <Button onClick={() => handleOpenDialog()}>
+             <Plus className="mr-2 h-4 w-4" /> 新增商品
+           </Button>
+        </div>
       </div>
 
       <div className="rounded-md border bg-card text-white">
@@ -274,6 +310,33 @@ export default function ProductsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1 || loading}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            上一页
+          </Button>
+          <div className="text-sm text-muted-foreground">
+            第 {page} / {totalPages} 页
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages || loading}
+          >
+            下一页
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Stock Management Dialog */}
       {stockProduct && (
