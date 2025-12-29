@@ -5,11 +5,14 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const username = searchParams.get("username");
+  const rawUsername = searchParams.get("username");
 
-  if (!username) {
+  if (!rawUsername) {
     return NextResponse.json({ error: "Username is required" }, { status: 400 });
   }
+
+  // Sanitize: Strip region suffixes to find the actual sub-user in upstream/DB
+  const username = rawUsername.replace("-region-US", "").trim();
 
   try {
     const data = await queryTrafficUsage(username);

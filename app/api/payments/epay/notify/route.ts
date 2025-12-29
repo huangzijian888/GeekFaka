@@ -66,7 +66,7 @@ async function processNotification(data: any, req?: Request) {
           log.info({ productId: order.productId }, "Processing traffic product order");
           
           // 1. Create sub-user on upstream
-          const account = await createTrafficSubUser(order.orderNo);
+          const account = await createTrafficSubUser(order.orderNo, order.product.trafficDuration);
           
           // 2. Calculate expiration
           let expiresAt: Date | null = null;
@@ -74,7 +74,7 @@ async function processNotification(data: any, req?: Request) {
             expiresAt = new Date(Date.now() + order.product.trafficDuration * 3600000);
           }
 
-          // 3. Create TrafficAccount record
+          // 3. Create TrafficAccount record (Using original username for DB)
           await tx.trafficAccount.create({
             data: {
               username: account.username,
@@ -85,15 +85,14 @@ async function processNotification(data: any, req?: Request) {
           });
 
           // 4. Create a virtual license for display
-          // Fetch proxy host/port from settings or use defaults
-          const proxyHostSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_host" } });
-          const proxyPortSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_port" } });
-          const host = proxyHostSetting?.value || "proxy.example.com";
-          const port = proxyPortSetting?.value || "10000";
+          // Fixed host/port and username with region suffix
+          const host = "us.arxlabs.io";
+          const port = "3010";
+          const formattedUsername = `${account.username}-region-US`;
 
           await tx.license.create({
             data: {
-              code: `${host}:${port}:${account.username}:${account.password}`,
+              code: `${host}:${port}:${formattedUsername}:${account.password}`,
               productId: order.productId,
               orderId: order.id,
               status: "SOLD"

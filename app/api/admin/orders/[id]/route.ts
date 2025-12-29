@@ -29,7 +29,7 @@ export async function PATCH(
          
          if (order.product.isTrafficItem) {
             // Traffic Item Logic
-            const account = await createTrafficSubUser(order.orderNo);
+            const account = await createTrafficSubUser(order.orderNo, order.product.trafficDuration);
             let expiresAt: Date | null = null;
             if (order.product.trafficDuration > 0) {
               expiresAt = new Date(Date.now() + order.product.trafficDuration * 3600000);
@@ -44,14 +44,14 @@ export async function PATCH(
               }
             });
 
-            const proxyHostSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_host" } });
-            const proxyPortSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_port" } });
-            const host = proxyHostSetting?.value || "proxy.example.com";
-            const port = proxyPortSetting?.value || "10000";
+            // FIXED Host/Port and formatted username
+            const host = "us.arxlabs.io";
+            const port = "3010";
+            const formattedUsername = `${account.username}-region-US`;
 
             await tx.license.create({
               data: {
-                code: `${host}:${port}:${account.username}:${account.password}`,
+                code: `${host}:${port}:${formattedUsername}:${account.password}`,
                 productId: order.productId,
                 orderId: order.id,
                 status: "SOLD"

@@ -15,13 +15,14 @@ async function getAPIKey() {
   return setting?.value;
 }
 
-export async function createTrafficSubUser(orderNo: string, password?: string) {
+export async function createTrafficSubUser(orderNo: string, durationHours: number, password?: string) {
   const key = await getAPIKey();
   if (!key) throw new Error("高级接口密钥未配置");
 
-  // Use HTStore prefix as requested
+  // Distinguish between Timed (T) and Unlimited (U)
+  const typeIndicator = durationHours > 0 ? "T" : "U";
   const randomSuffix = Math.random().toString(36).slice(-6).toUpperCase();
-  const username = `HTStore${randomSuffix}`;
+  const username = `HTStore${typeIndicator}${randomSuffix}`;
   const pass = password || Math.random().toString(36).slice(-8);
 
   const res = await fetch(`${BASE_URL}/addSubUser`, {
