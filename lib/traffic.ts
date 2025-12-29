@@ -19,10 +19,9 @@ export async function createTrafficSubUser(orderNo: string, durationHours: numbe
   const key = await getAPIKey();
   if (!key) throw new Error("高级接口密钥未配置");
 
-  // Distinguish between Timed (T) and Unlimited (U)
-  const typeIndicator = durationHours > 0 ? "T" : "U";
+  // Format: HTStore + 6 Random Chars
   const randomSuffix = Math.random().toString(36).slice(-6).toUpperCase();
-  const username = `HTStore${typeIndicator}${randomSuffix}`;
+  const username = `HTStore${randomSuffix}`;
   const pass = password || Math.random().toString(36).slice(-8);
 
   const res = await fetch(`${BASE_URL}/addSubUser`, {
@@ -82,7 +81,13 @@ export async function queryDailyRecords(username: string, start: string, end: st
   const key = await getAPIKey();
   if (!key) return null;
 
-  const params = new URLSearchParams({ key, username, start, end });
+  const params = new URLSearchParams({ 
+    key, 
+    username, // Documentation says username is the parameter name
+    start, 
+    end 
+  });
+  
   const res = await fetch(`${BASE_URL}/allRecords?${params.toString()}`);
   const data: APIResponse = await res.json();
   return data.code === 0 ? data.data : [];
@@ -93,7 +98,13 @@ export async function queryHourlyRecords(username: string, start: string, end: s
   const key = await getAPIKey();
   if (!key) return null;
 
-  const params = new URLSearchParams({ key, username, start, end });
+  const params = new URLSearchParams({ 
+    key, 
+    username, // Documentation says username is the parameter name
+    start, 
+    end 
+  });
+  
   const res = await fetch(`${BASE_URL}/records?${params.toString()}`);
   const data: APIResponse = await res.json();
   return data.code === 0 ? data.data : [];
