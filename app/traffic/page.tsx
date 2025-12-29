@@ -76,7 +76,7 @@ export default function TrafficQueryPage() {
         trigger: "axis",
         formatter: (params: any) => {
           const item = params[0];
-          return `${item.name}<br/>消耗: <b>${item.value} GB</b>`;
+          return `${item.name}<br/>消耗: <b>${item.value} MB</b>`;
         }
       },
       grid: { left: "3%", right: "4%", bottom: "3%", containLabel: true, top: "10%" },
@@ -88,7 +88,7 @@ export default function TrafficQueryPage() {
       },
       yAxis: {
         type: "value",
-        name: "GB",
+        name: "MB",
         splitLine: { lineStyle: { color: "#222" } },
         axisLabel: { color: "#888" }
       },
