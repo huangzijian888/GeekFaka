@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ShoppingCart, Loader2, Zap, Package, CreditCard, Wallet } from "lucide-react"
+import { ShoppingCart, Loader2, Zap, Package, CreditCard, Wallet, Ticket, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import ReactMarkdown from "react-markdown"
 
