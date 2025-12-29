@@ -1,6 +1,6 @@
 # GeekFaka - 极客发卡系统
 
-它专为独立开发者、创作者和数字商品卖家设计，提供从商品展示、下单购买、支付对接（易支付/支付宝/微信）到自动发货的完整闭环。
+它专为独立开发者、创作者和数字商品卖家设计，提供从商品展示、下单购买、支付对接（易支付/支付宝/微信）到自动发货、邮件通知、优惠折扣的完整闭环。
 
 ## 📸 界面预览
 
@@ -10,58 +10,49 @@
 ### 沉浸式购买弹窗
 ![Checkout](images/buy.png)
 
-### 商品管理 (Markdown编辑器)
-![Product Edit](images/Product-2.png)
+### 现代化仪表盘 (ECharts)
+![Dashboard](https://github.com/user-attachments/assets/8f5dd6f-stats)
 
-### 系统设置 (在线配置)
-![Settings](images/Setting.png)
-
-### 商品列表
-![Product List](images/Product.png)
-
-### 订单查询
-![Orders](images/order.png)
+### 智能公告系统
+![Announcement](https://github.com/user-attachments/assets/c914827-design)
 
 ## ✨ 核心特性
 
-- **🚀 双模式架构**：开发/轻量部署支持 **SQLite**，生产环境支持 **MySQL/PostgreSQL**。
-- **🐳 Docker 一键部署**：内置 Dockerfile 与 Docker-compose，5分钟内完成生产环境搭建。
-- **🎨 极客 UI**：极致深色模式，左右分栏设计，磨砂玻璃质感，适配大屏操作。
+- **🚀 双模式架构**：开发支持 **SQLite**，生产环境支持 **MySQL/PostgreSQL**，大文本内容自动优化。
+- **🐳 Docker 一键部署**：内置 Dockerfile (Node.js 20) 与 Docker-compose，5分钟内完成全环境搭建。
+- **🎨 极客 UI**：极致深色模式，毛玻璃质感，商品卡片悬停详情预览，全平台响应式适配。
+- **📈 深度仪表盘**：集成 **ECharts** 趋势图，支持今日收入、订单统计（时区优化）及缺货预警。
 - **💳 支付网关**：内置 **易支付 (EPay)** 适配器，支持 MD5 和 **RSA 高安全签名**。
-- **⚙️ 在线配置**：支付参数、站点信息、管理员密码均可在后台动态修改，无需改码。
-- **📝 Markdown 支持**：商品描述支持 Markdown 编辑与渲染，图文并茂展示商品。
+- **🎫 优惠码系统**：支持**固定金额/百分比折扣**，可绑定特定商品或分类，内置**外部批量创建 API**。
+- **📩 邮件发货**：集成 **Resend** 服务，支付成功后自动将格式化后的卡密发送至客户邮箱。
+- **📑 内容管理 (CMS)**：内置文章管理系统，可轻松发布购买教程、常见问题、服务协议等页面。
+- **📦 灵活发货格式**：支持普通卡密、账号(----密码)、虚拟卡(|)、代理IP(:)等多种格式的智能分割与展示。
+- **🔐 安全加固**：后台采用 **JWT (JSON Web Token)** 认证，支持 API Key 保护，Session 稳定可靠。
 
 ## 🚀 快速开始
 
 ### 方式 A：Docker 部署 (推荐生产环境)
 
-这是最简单且最安全的方式，自动配置 MySQL 环境。
+这是最简单且最安全的方式，自动配置环境。
 
 1. **下载配置文件**：
-   你只需要 `docker-compose.yml` 文件即可。
+   你只需要 `docker-compose.yml` 文件。
    ```bash
    wget https://raw.githubusercontent.com/huangzijian888/GeekFaka/main/docker-compose.yml
    ```
 
 2. **配置参数**：
-   修改 `docker-compose.yml` 中的环境变量，特别是 `MYSQL_PASSWORD`、`DATABASE_URL` 和 `NEXT_PUBLIC_URL`。
+   修改 `docker-compose.yml` 中的环境变量，特别是 `DATABASE_URL`、`ADMIN_PASSWORD` 和 `NEXT_PUBLIC_URL`。
 
 3. **启动系统**：
    ```bash
    docker-compose up -d
    ```
-   访问 `http://localhost:3000` 即可开始使用。
-
-### 1Panel / 宝塔面板 部署
-
-1. 在面板中创建一个新的 **“编排” (Compose)**。
-2. 复制 `docker-compose.yml` 的内容进去。
-3. 修改环境变量为你想要的配置。
-4. 点击部署，面板会自动拉取 `huangzijian888/geekfaka:latest` 镜像并启动。
+   访问 `http://localhost:3000` 即可。
 
 ---
 
-### 方式 B：本地源码运行 (适合开发/预览)
+### 方式 B：本地源码运行 (适合开发)
 
 1. **安装依赖**：
    ```bash
@@ -74,33 +65,28 @@
    DATABASE_URL="file:./dev.db"
    ADMIN_PASSWORD="admin"
    NEXT_PUBLIC_URL="http://localhost:3000"
+   JWT_SECRET="随机字符串"
    ```
 
-3. **初始化数据库**：
+3. **初始化与运行**：
    ```bash
-   npx prisma migrate dev --name init
-   ```
-
-4. **启动开发服务器**：
-   ```bash
+   npx prisma db push
    yarn dev
    ```
 
-## 📖 管理手册
+## 📖 功能指南
 
-### 后台入口
+### 后台管理
 - 地址：`/admin`
-- 初始密码：查看你的环境变量 `ADMIN_PASSWORD` (默认 `admin`)。
+- 核心模块：仪表盘统计、商品分类管理、订单列表（带补单）、优惠码配置、文章发布。
 
-### 支付对接 (易支付)
-1. 进入“系统设置” -> “支付渠道”。
-2. 点击“易支付”。
-3. 勾选实际支持的子渠道（支付宝/微信/QQ/USDT）。
-4. 设置手续费率（仅用于前端展示，不影响实际传参金额）。
-5. 填入 API 地址、PID 和 Key/RSA 密钥并保存。
+### 邮件发货 (Resend)
+1. 在 [Resend](https://resend.com) 获取 API Key。
+2. 后台“系统设置” -> “邮件通知”中开启并填入 Key 和经验证的发件人邮箱。
 
-### 数据库切换
-本项目基于 Prisma，如需手动将 SQLite 切换为 MySQL，请修改 `prisma/schema.prisma` 中的 `provider = "mysql"` 并运行 `npx prisma migrate dev`。在使用 Docker 镜像时，系统会自动完成此转换。
+### 批量创建优惠码 API
+- 路径：`POST /api/v1/coupons/bulk`
+- 鉴权：Header 携带 `X-API-KEY` (需在环境变量 `COUPON_API_KEY` 配置)。
 
 ## 🤝 参与贡献
 
