@@ -215,7 +215,7 @@ export default function TrafficQueryPage() {
                         <ReactECharts 
                           option={getOption()} 
                           style={{ height: '100%', width: '100%' }}
-                          settings={{ notMerge: true }}
+                          notMerge={true}
                         />
                       ) : (
                         <div className="text-center space-y-2">
