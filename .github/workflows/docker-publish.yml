@@ -3,17 +3,16 @@ name: Docker Build and Publish
 on:
   push:
     branches: [ "main", "business" ]
-    # Publish semver tags as releases.
-    tags: [ 'v*.*.*', '*.*.*-business' ]
+    # Support v1.0.0, 1.0.0, and business tags
+    tags: [ '*.*.*', 'v*.*.*', '*-business' ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
 
 env:
   REGISTRY: docker.io
-  # Use a ternary-like logic to set image name based on branch
-  # If on business branch, use ht-store, else use the repository name (GeekFaka)
-  DOCKER_IMAGE: ${{ github.ref == 'refs/heads/business' && 'huangzijian888/ht-store' || 'huangzijian888/GeekFaka' }}
+  # Correctly detect business builds via branch name or tag suffix
+  DOCKER_IMAGE: ${{ (github.ref == 'refs/heads/business' || contains(github.ref, '-business')) && 'huangzijian888/ht-store' || 'huangzijian888/GeekFaka' }}
 
 jobs:
   build:
