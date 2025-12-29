@@ -49,9 +49,18 @@ export function StoreFront({ categories }: { categories: Category[] }) {
   const [quantity, setQuantity] = useState(1)
   const [emailError, setEmailError] = useState("")
 
+  // Coupon State
+  const [couponCode, setCouponCode] = useState("")
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string, discount: number } | null>(null)
+  const [couponError, setCouponError] = useState("")
+
   // Derived State
   const selectedChannel = channels.find(c => c.id === paymentMethod)
-  const productTotal = selectedProduct ? Number(selectedProduct.price) * quantity : 0
+  const subtotal = selectedProduct ? Number(selectedProduct.price) * quantity : 0
+  const discount = appliedCoupon ? appliedCoupon.discount : 0
+  const productTotal = Math.max(0, subtotal - discount)
+  
   const feePercent = selectedChannel?.fee || 0
   const feeAmount = productTotal * (feePercent / 100)
   const finalTotal = productTotal + feeAmount
@@ -70,12 +79,41 @@ export function StoreFront({ categories }: { categories: Category[] }) {
   useEffect(() => {
     if (!isBuyOpen) {
       setEmailError("")
+      setCouponCode("")
+      setAppliedCoupon(null)
+      setCouponError("")
     }
   }, [isBuyOpen])
 
   const validateEmail = (val: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return re.test(val)
+  }
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return
+    setIsValidatingCoupon(true)
+    setCouponError("")
+    
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode, productId: selectedProduct?.id })
+      })
+      const data = await res.json()
+      
+      if (res.ok) {
+        setAppliedCoupon({ code: data.code, discount: Number(data.discount) })
+      } else {
+        setCouponError(data.error || "无效的优惠码")
+        setAppliedCoupon(null)
+      }
+    } catch (e) {
+      setCouponError("验证失败")
+    } finally {
+      setIsValidatingCoupon(false)
+    }
   }
 
   const handleBuyClick = (product: Product) => {
@@ -109,7 +147,8 @@ export function StoreFront({ categories }: { categories: Category[] }) {
         productId: selectedProduct.id,
         quantity,
         email: email, 
-        paymentMethod: providerName, 
+        paymentMethod: providerName,
+        couponCode: appliedCoupon?.code,
         options: {
           channel: paymentMethod === "wechat" ? "wxpay" : paymentMethod 
         }
@@ -295,6 +334,34 @@ export function StoreFront({ categories }: { categories: Category[] }) {
                     onChange={(e) => setQuantity(Number(e.target.value))}
                     className="bg-background"
                   />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="coupon">优惠码 (可选)</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="coupon"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="输入优惠码"
+                        className={cn("bg-background pr-8 uppercase font-mono", appliedCoupon && "border-green-500 focus-visible:ring-green-500")}
+                        disabled={!!appliedCoupon}
+                      />
+                      {appliedCoupon && <Check className="absolute right-2.5 top-2.5 h-4 w-4 text-green-500" />}
+                    </div>
+                    {appliedCoupon ? (
+                      <Button variant="outline" size="icon" onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="shrink-0">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button variant="secondary" onClick={handleApplyCoupon} disabled={isValidatingCoupon || !couponCode.trim()} className="shrink-0">
+                        {isValidatingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : "使用"}
+                      </Button>
+                    )}
+                  </div>
+                  {couponError && <p className="text-[10px] text-destructive ml-1">{couponError}</p>}
+                  {appliedCoupon && <p className="text-[10px] text-green-600 ml-1 font-medium flex items-center gap-1"><Ticket className="h-3 w-3" /> 已减免 ¥{appliedCoupon.discount.toFixed(2)}</p>}
                 </div>
               </div>
 

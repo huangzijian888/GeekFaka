@@ -1,7 +1,7 @@
 import { isAuthenticated } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Package, FileText, Settings, LogOut, BookOpen } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, FileText, Settings, LogOut, BookOpen, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminLayout({
@@ -68,6 +68,12 @@ export default async function AdminLayout({
             <Button variant="ghost" className="w-full justify-start">
               <FileText className="mr-2 h-4 w-4" />
               订单列表
+            </Button>
+          </Link>
+          <Link href="/admin/coupons">
+            <Button variant="ghost" className="w-full justify-start">
+              <Ticket className="mr-2 h-4 w-4" />
+              优惠码管理
             </Button>
           </Link>
           <Link href="/admin/articles">

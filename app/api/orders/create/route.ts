@@ -8,9 +8,9 @@ const log = logger.child({ module: 'OrderCreate' });
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { productId, quantity = 1, email, paymentMethod = "epay", options } = body;
+    const { productId, quantity = 1, email, paymentMethod = "epay", couponCode, options } = body;
 
-    log.info({ productId, quantity, email, paymentMethod }, "Order creation attempt");
+    log.info({ productId, quantity, email, paymentMethod, couponCode }, "Order creation attempt");
 
     if (!productId || !email) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -36,29 +36,56 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Insufficient stock" }, { status: 400 });
     }
 
-    // 2. Calculate Amount
-    const price = Number(product.price);
-    const totalAmount = price * quantity;
+    // 2. Handle Coupon
+    let discountAmount = 0;
+    let validCouponId = undefined;
 
-    // 3. Create Order
+    if (couponCode) {
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: couponCode.trim().toUpperCase() }
+      });
+
+      if (!coupon || coupon.isUsed) {
+        return NextResponse.json({ error: "优惠码无效或已被使用" }, { status: 400 });
+      }
+      
+      discountAmount = Number(coupon.discount);
+      validCouponId = coupon.id;
+    }
+
+    // 3. Calculate Amount
+    const price = Number(product.price);
+    const totalAmount = Math.max(0, (price * quantity) - discountAmount);
+
+    // 4. Create Order
     // Generate a simple order number
     const orderNo = `HT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    const order = await prisma.order.create({
-      data: {
-        orderNo,
-        email,
-        productId,
-        quantity,
-        totalAmount,
-        paymentMethod,
-        status: "PENDING",
+    const order = await prisma.$transaction(async (tx) => {
+      if (validCouponId) {
+        await tx.coupon.update({
+          where: { id: validCouponId },
+          data: { isUsed: true, usedAt: new Date() }
+        });
       }
+
+      return await tx.order.create({
+        data: {
+          orderNo,
+          email,
+          productId,
+          quantity,
+          totalAmount,
+          paymentMethod,
+          status: "PENDING",
+          couponId: validCouponId
+        }
+      });
     });
     
     log.info({ orderNo, totalAmount }, "Order created in DB");
 
-    // 4. Initiate Payment
+    // 5. Initiate Payment
     try {
       const adapter = getPaymentAdapter(paymentMethod);
       const paymentIntent = await adapter.createPayment(

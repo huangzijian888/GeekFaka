@@ -74,8 +74,20 @@ model Order {
   paymentMethod String?
   paidAt        DateTime?
   emailSent     Boolean   @default(false)
+  couponId      String?   @unique
+  coupon        Coupon?   @relation(fields: [couponId], references: [id])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+model Coupon {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  discount  Decimal   // Fixed discount amount
+  isUsed    Boolean   @default(false)
+  order     Order?
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
 }
 
 model Article {
