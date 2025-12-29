@@ -73,6 +73,7 @@ model Order {
   licenses      License[]
   paymentMethod String?
   paidAt        DateTime?
+  emailSent     Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }

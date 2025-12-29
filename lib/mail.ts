@@ -33,7 +33,26 @@ function formatLicense(code: string, index: number, format: string) {
 
 export async function sendOrderEmail(orderNo: string) {
   try {
-    // 1. Fetch Resend configuration
+    // 1. Fetch Order details with product and licenses first to check status
+    const order = await prisma.order.findUnique({
+      where: { orderNo },
+      include: {
+        product: true,
+        licenses: true
+      }
+    });
+
+    if (!order || !order.email || order.status !== 'PAID' || order.emailSent) {
+      log.info({ orderNo, reason: !order ? "NotFound" : (order.emailSent ? "AlreadySent" : "NotPaid") }, "Skipping email sending");
+      return;
+    }
+
+    if (order.licenses.length === 0) {
+      log.warn({ orderNo }, "Skipping email sending: No licenses found attached to order");
+      return;
+    }
+
+    // 2. Fetch Resend configuration
     const settings = await prisma.systemSetting.findMany({
       where: {
         key: { in: ['resend_api_key', 'resend_from_email', 'resend_enabled', 'site_title'] }
@@ -46,19 +65,6 @@ export async function sendOrderEmail(orderNo: string) {
     }, {} as Record<string, string>);
 
     if (config.resend_enabled !== 'true' || !config.resend_api_key) {
-      return;
-    }
-
-    // 2. Fetch Order details with product and licenses
-    const order = await prisma.order.findUnique({
-      where: { orderNo },
-      include: {
-        product: true,
-        licenses: true
-      }
-    });
-
-    if (!order || !order.email || order.status !== 'PAID') {
       return;
     }
 
@@ -81,6 +87,11 @@ export async function sendOrderEmail(orderNo: string) {
       log.error({ error, orderNo }, "Failed to send email via Resend");
     } else {
       log.info({ data, orderNo }, "Order email sent successfully");
+      // Mark as sent to prevent duplicates
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { emailSent: true }
+      });
     }
 
   } catch (err) {
