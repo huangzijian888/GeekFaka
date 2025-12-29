@@ -2,18 +2,17 @@ name: Docker Build and Publish
 
 on:
   push:
-    branches: [ "main" ]
-    # Publish semver tags as releases.
-    tags: [ 'v*.*.*' ]
+    branches: [ "main", "business" ]
+    # Support v1.0.0, 1.0.0, and business tags
+    tags: [ '*.*.*', 'v*.*.*', '*-business' ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: docker.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+  # Correctly detect business builds via branch name or tag suffix
+  DOCKER_IMAGE: ${{ (github.ref == 'refs/heads/business' || contains(github.ref, '-business')) && 'huangzijian888/ht-store' || 'huangzijian888/GeekFaka' }}
 
 jobs:
   build:
@@ -22,8 +21,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
       id-token: write
 
     steps:
@@ -47,9 +44,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.DOCKER_IMAGE }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/business' }}
             type=ref,event=tag
 
       # Build and push Docker image
