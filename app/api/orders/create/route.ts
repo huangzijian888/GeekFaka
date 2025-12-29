@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    if (product._count.licenses < quantity) {
+    if (!product.isTrafficItem && product._count.licenses < quantity) {
       log.warn({ productId, requested: quantity, available: product._count.licenses }, "Insufficient stock");
       return NextResponse.json({ error: "Insufficient stock" }, { status: 400 });
     }

@@ -44,18 +44,17 @@ export default async function Home() {
     console.warn("Failed to fetch homepage data (likely during build):", error);
   }
 
-  const categories = categoriesData.map(cat => ({
-    id: cat.id,
-    name: cat.name,
-    products: cat.products.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      price: p.price.toString(),
-      stock: p._count.licenses
-    }))
-  }));
-
+      const categories = categoriesData.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      products: cat.products.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price.toString(),
+        stock: p.isTrafficItem ? 999999 : p._count.licenses
+      }))
+    }));
   return (
     <main className="min-h-screen bg-background dark text-foreground selection:bg-primary selection:text-primary-foreground flex flex-col">
       <Navbar />

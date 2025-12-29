@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     // For simplicity, we assume codes are unique enough or user handles retries.
     const result = await prisma.coupon.createMany({
       data: couponsData,
-      skipDuplicates: true // Important to avoid crash on collisions
+      // skipDuplicates: true // Not supported in SQLite
     });
 
     return NextResponse.json({ 

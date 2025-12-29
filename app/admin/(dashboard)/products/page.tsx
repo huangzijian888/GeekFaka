@@ -229,11 +229,13 @@ export default function ProductsPage() {
                   <TableCell>
                     <div className={cn(
                       "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                      product._count.licenses === 0 
-                        ? "bg-destructive/10 text-destructive border-destructive/20" 
-                        : "bg-green-500/10 text-green-500 border-green-500/20"
+                      product.isTrafficItem
+                        ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                        : product._count.licenses === 0 
+                          ? "bg-destructive/10 text-destructive border-destructive/20" 
+                          : "bg-green-500/10 text-green-500 border-green-500/20"
                     )}>
-                      库存: {product._count.licenses}
+                      {product.isTrafficItem ? "自动发货" : `库存: ${product._count.licenses}`}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -244,18 +246,20 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                       <Button 
-                         variant="secondary" 
-                         size="sm" 
-                         className="h-8 px-2 lg:px-3 bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20"
-                         onClick={() => {
-                           setStockProduct(product)
-                           setIsStockOpen(true)
-                         }}
-                       >
-                         <Key className="h-3.5 w-3.5 mr-1" />
-                         库存
-                       </Button>
+                       {!product.isTrafficItem && (
+                         <Button 
+                           variant="secondary" 
+                           size="sm" 
+                           className="h-8 px-2 lg:px-3 bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20"
+                           onClick={() => {
+                             setStockProduct(product)
+                             setIsStockOpen(true)
+                           }}
+                         >
+                           <Key className="h-3.5 w-3.5 mr-1" />
+                           库存
+                         </Button>
+                       )}
                        <Button 
                          variant="secondary" 
                          size="sm" 
