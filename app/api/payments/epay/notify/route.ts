@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { getPaymentAdapter } from "@/lib/payments/registry";
 import { logger } from "@/lib/logger";
 import { sendOrderEmail } from "@/lib/mail";
-import { createTrafficSubUser } from "@/lib/traffic";
 
 export async function GET(req: Request) {
   // EPay notifications are usually GET requests, but verify based on your gateway
@@ -61,73 +60,30 @@ async function processNotification(data: any, req?: Request) {
           return;
         }
 
-        // --- NEW: Traffic Item Logic ---
-        if (order.product.isTrafficItem) {
-          log.info({ productId: order.productId }, "Processing traffic product order");
-          
-          // 1. Create sub-user on upstream
-          const account = await createTrafficSubUser(order.orderNo, order.product.trafficDuration);
-          
-          // 2. Calculate expiration
-          let expiresAt: Date | null = null;
-          if (order.product.trafficDuration > 0) {
-            expiresAt = new Date(Date.now() + order.product.trafficDuration * 3600000);
-          }
+        // --- Standard License Logic ---
+        const licenses = await tx.license.findMany({
+          where: { 
+            productId: order.productId,
+            status: "AVAILABLE"
+          },
+          orderBy: { createdAt: 'asc' }, // FIFO: Use oldest licenses first
+          take: order.quantity
+        });
 
-          // 3. Create TrafficAccount record
-          await tx.trafficAccount.create({
-            data: {
-              username: account.username,
-              password: account.password,
-              orderId: order.id,
-              expiresAt
-            }
-          });
-
-          // 4. Create a virtual license for display
-          // FETCH dynamic host/port from settings
-          const proxyHostSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_host" } });
-          const proxyPortSetting = await tx.systemSetting.findUnique({ where: { key: "proxy_port" } });
-          const host = proxyHostSetting?.value || "us.arxlabs.io";
-          const port = proxyPortSetting?.value || "3010";
-          
-          const formattedUsername = `${account.username}-region-US`;
-
-          await tx.license.create({
-            data: {
-              code: `${host}:${port}:${formattedUsername}:${account.password}`,
-              productId: order.productId,
-              orderId: order.id,
-              status: "SOLD"
-            }
-          });
-
-        } else {
-          // --- Standard License Logic ---
-          const licenses = await tx.license.findMany({
-            where: { 
-              productId: order.productId,
-              status: "AVAILABLE"
-            },
-            orderBy: { createdAt: 'asc' }, // FIFO: Use oldest licenses first
-            take: order.quantity
-          });
-
-          if (licenses.length < order.quantity) {
-            log.error({
-              needed: order.quantity,
-              found: licenses.length
-            }, "Insufficient stock for paid order");
-            // Important: in real world might need to alert admin or refund
-            return; 
-          }
-
-          const licenseIds = licenses.map(l => l.id);
-          await tx.license.updateMany({
-            where: { id: { in: licenseIds } },
-            data: { status: "SOLD", orderId: order.id }
-          });
+        if (licenses.length < order.quantity) {
+          log.error({
+            needed: order.quantity,
+            found: licenses.length
+          }, "Insufficient stock for paid order");
+          // Important: in real world might need to alert admin or refund
+          return; 
         }
+
+        const licenseIds = licenses.map(l => l.id);
+        await tx.license.updateMany({
+          where: { id: { in: licenseIds } },
+          data: { status: "SOLD", orderId: order.id }
+        });
 
         await tx.order.update({
           where: { id: order.id },
