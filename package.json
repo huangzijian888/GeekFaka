@@ -1,6 +1,6 @@
 {
   "name": "geek-faka",
-  "version": "1.0.17-business",
+  "version": "1.0.18-business",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -164,22 +164,32 @@ export default function TrafficQueryPage() {
                   </TabsList>
                   
                   <TabsContent value="current" className="mt-6 space-y-6">
-                    <div className="p-8 text-center space-y-4 border-2 border-dashed border-primary/20 rounded-2xl bg-primary/5">
-                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                        <Zap className="h-6 w-6 text-primary animate-pulse" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-xl bg-background/50 border border-border/50 text-center space-y-1">
+                        <p className="text-xs text-muted-foreground">已用流量</p>
+                        <div className="text-2xl font-black text-primary">
+                          {result.traffic} <span className="text-xs font-normal text-muted-foreground">GB</span>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="font-bold text-lg">实时统计升级中</h3>
-                        <p className="text-xs text-muted-foreground leading-relaxed px-4">
-                          上游系统正在同步数据，该看板数据暂时不可用。<br/>
-                          请参考“<b>消耗趋势</b>”获取历史数据。
-                        </p>
+                      <div className="p-4 rounded-xl bg-background/50 border border-border/50 text-center space-y-1">
+                        <p className="text-xs text-muted-foreground">总额度</p>
+                        <div className="text-2xl font-black text-foreground">
+                          {result.alltraffic} <span className="text-xs font-normal text-muted-foreground">GB</span>
+                        </div>
                       </div>
-                      <div className="pt-1">
-                        <Badge className="bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/10 text-[10px] px-2 py-0">
-                          账号状态: 正常
-                        </Badge>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Zap className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold">状态正常</p>
+                          <p className="text-xs text-muted-foreground">账号 {result.username}</p>
+                        </div>
                       </div>
+                      <Badge variant="outline" className="border-green-500/30 text-green-500 bg-green-500/10">Active</Badge>
                     </div>
                   </TabsContent>
 
