@@ -150,7 +150,14 @@ export default function CategoriesPage() {
             ) : (
               categories.map((category) => (
                 <TableRow key={category.id} className="hover:bg-muted/30">
-                  <TableCell className="font-bold text-lg">{category.name}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-lg">{category.name}</span>
+                      <code className="text-[10px] text-muted-foreground font-mono select-all">
+                        ID: {category.id}
+                      </code>
+                    </div>
+                  </TableCell>
                   <TableCell className="font-mono text-sm text-muted-foreground">
                     {category.slug}
                   </TableCell>

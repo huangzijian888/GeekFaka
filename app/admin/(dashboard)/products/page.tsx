@@ -246,6 +246,9 @@ export default function ProductsPage() {
                         {product.name}
                       </span>
                       <div className="flex items-center gap-2">
+                        <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono select-all">
+                          ID: {product.id}
+                        </code>
                         <span className="text-xs text-muted-foreground/60 line-clamp-1 italic font-medium">
                           {product.description || "暂无描述"}
                         </span>
