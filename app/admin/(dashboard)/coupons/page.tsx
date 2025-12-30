@@ -94,9 +94,15 @@ export default function CouponsPage() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("/api/admin/products")
+      const res = await fetch("/api/admin/products?limit=100")
       const data = await res.json()
-      setProducts(data)
+      if (data.products && Array.isArray(data.products)) {
+        setProducts(data.products)
+      } else if (Array.isArray(data)) {
+        setProducts(data)
+      } else {
+        setProducts([])
+      }
     } catch (e) {
       console.error(e)
     }
