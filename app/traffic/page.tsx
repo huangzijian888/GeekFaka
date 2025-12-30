@@ -185,17 +185,29 @@ export default function TrafficQueryPage() {
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-between">
+                    <div className={cn(
+                      "p-4 rounded-xl flex items-center justify-between",
+                      result.isExpired ? "bg-destructive/10 border border-destructive/20" : "bg-primary/5 border border-primary/10"
+                    )}>
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Zap className="h-5 w-5 text-primary" />
+                        <div className={cn(
+                          "h-10 w-10 rounded-full flex items-center justify-center",
+                          result.isExpired ? "bg-destructive/20" : "bg-primary/10"
+                        )}>
+                          <Zap className={cn("h-5 w-5", result.isExpired ? "text-destructive" : "text-primary")} />
                         </div>
                         <div>
-                          <p className="text-sm font-bold">状态正常</p>
+                          <p className={cn("text-sm font-bold", result.isExpired && "text-destructive")}>
+                            {result.isExpired ? "账号已过期" : "状态正常"}
+                          </p>
                           <p className="text-xs text-muted-foreground">账号 {result.username}</p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="border-green-500/30 text-green-500 bg-green-500/10">Active</Badge>
+                      {result.isExpired ? (
+                        <Badge variant="destructive" className="animate-pulse">Expired</Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-green-500/30 text-green-500 bg-green-500/10">Active</Badge>
+                      )}
                     </div>
                   </TabsContent>
 
