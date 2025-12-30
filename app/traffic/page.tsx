@@ -164,17 +164,23 @@ export default function TrafficQueryPage() {
                   </TabsList>
                   
                   <TabsContent value="current" className="mt-6 space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-background/50 border border-border/50 text-center space-y-1">
-                        <p className="text-xs text-muted-foreground">已用流量</p>
-                        <div className="text-2xl font-black text-primary">
-                          {result.traffic} <span className="text-xs font-normal text-muted-foreground">GB</span>
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                      <div className="p-3 sm:p-4 rounded-xl bg-background/50 border border-border/50 text-center space-y-1">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">已用流量</p>
+                        <div className="text-sm sm:text-xl font-black text-primary">
+                          {result.use_traffic} <span className="text-[10px] font-normal text-muted-foreground">GB</span>
                         </div>
                       </div>
-                      <div className="p-4 rounded-xl bg-background/50 border border-border/50 text-center space-y-1">
-                        <p className="text-xs text-muted-foreground">总额度</p>
-                        <div className="text-2xl font-black text-foreground">
-                          {result.alltraffic} <span className="text-xs font-normal text-muted-foreground">GB</span>
+                      <div className="p-3 sm:p-4 rounded-xl bg-background/50 border border-border/50 text-center space-y-1">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">剩余额度</p>
+                        <div className="text-sm sm:text-xl font-black text-green-500">
+                          {result.traffic} <span className="text-[10px] font-normal text-muted-foreground">GB</span>
+                        </div>
+                      </div>
+                      <div className="p-3 sm:p-4 rounded-xl bg-background/50 border border-border/50 text-center space-y-1">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">总额度</p>
+                        <div className="text-sm sm:text-xl font-black text-foreground">
+                          {result.alltraffic} <span className="text-[10px] font-normal text-muted-foreground">GB</span>
                         </div>
                       </div>
                     </div>
