@@ -52,7 +52,7 @@ export default async function Home() {
         name: p.name,
         description: p.description,
         price: p.price.toString(),
-        stock: p.isTrafficItem ? 999999 : p._count.licenses
+        stock: p._count.licenses
       }))
     }));
   return (
