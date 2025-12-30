@@ -59,9 +59,16 @@ export default function OrdersPage() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("/api/admin/products")
+      const res = await fetch("/api/admin/products?limit=100")
       const data = await res.json()
-      setProducts(data)
+      if (res.ok && data.products) {
+        setProducts(data.products)
+      } else if (Array.isArray(data)) {
+        // Fallback for older API version if any
+        setProducts(data)
+      } else {
+        setProducts([])
+      }
     } catch (e) {
       console.error(e)
     }
