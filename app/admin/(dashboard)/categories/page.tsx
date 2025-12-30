@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit2, Trash2, Loader2, ArrowUp } from "lucide-react"
+import { Plus, Edit2, Trash2, Loader2, ArrowUp, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -17,6 +17,29 @@ interface Category {
   _count?: {
     products: number
   }
+}
+
+// Helper component for Copy ID
+function CopyId({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(id)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div 
+      className="inline-flex items-center gap-1 bg-muted/50 hover:bg-muted px-1.5 py-0.5 rounded text-[10px] text-muted-foreground font-mono cursor-pointer transition-colors border border-transparent hover:border-border mt-1 w-fit"
+      onClick={handleCopy}
+      title="点击复制 ID"
+    >
+      <span className="select-all">ID: {id}</span>
+      {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 opacity-50" />}
+    </div>
+  )
 }
 
 export default function CategoriesPage() {
@@ -153,9 +176,7 @@ export default function CategoriesPage() {
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-bold text-lg">{category.name}</span>
-                      <code className="text-[10px] text-muted-foreground font-mono select-all">
-                        ID: {category.id}
-                      </code>
+                      <CopyId id={category.id} />
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-sm text-muted-foreground">
