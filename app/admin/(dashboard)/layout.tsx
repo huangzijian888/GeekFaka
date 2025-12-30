@@ -11,41 +11,14 @@ export default async function AdminLayout({
 }) {
   const isAuth = await isAuthenticated();
   
-  // Exclude login page from protection check to avoid infinite loop
-  // But wait, layout wraps pages. We can't easily exclude specific routes inside layout.
-  // Actually, for cleaner structure, we usually group protected routes in (authenticated) group.
-  // But for now, let's just assume if you are hitting /admin/login, this layout is NOT used 
-  // if we place login outside or handle it carefully.
-  // BETTER APPROACH: Use Next.js Route Groups.
-  // Move layout to app/admin/(dashboard)/layout.tsx and page to app/admin/(dashboard)/page.tsx
-  // Then login stays at app/admin/login/page.tsx without this layout.
-  
-  // Let's do the check here, but we need to handle the login route case.
-  // The easiest way for now: Check if we are rendering login page? No, layout runs for all.
-  
-  // STRATEGY CHANGE: 
-  // I will assume this layout applies to everything under /admin.
-  // If the user is NOT authenticated, we redirect to login, UNLESS we are already there.
-  // BUT server components don't know the current URL path easily without middleware.
-  
-  // SO: simpler strategy -> I will rely on the fact that if I put this layout in `app/admin/layout.tsx`,
-  // it wraps `app/admin/login` too, which is bad because login page shouldn't have the sidebar.
-  
-  // FIX: I will move the protected dashboard into a Route Group `(dashboard)`.
-  // app/admin/(dashboard)/layout.tsx -> The Sidebar Layout (Protected)
-  // app/admin/(dashboard)/page.tsx -> Dashboard
-  // app/admin/login/page.tsx -> Login Page (No Sidebar, Public)
-  
   return (
-    <div className="flex min-h-screen flex-col md:flex-row bg-background dark text-foreground">
-      {/* Mobile Sidebar could be added here */}
-      
+    <div className="flex h-screen flex-col md:flex-row bg-background dark text-foreground overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden w-64 flex-col border-r bg-background md:flex">
+      <aside className="hidden w-64 flex-col border-r bg-background md:flex shrink-0">
         <div className="flex h-14 items-center border-b px-6 font-bold text-lg">
           GeekFaka Admin
         </div>
-        <nav className="flex-1 space-y-1 p-4">
+        <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
           <Link href="/admin">
             <Button variant="ghost" className="w-full justify-start">
               <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -89,7 +62,7 @@ export default async function AdminLayout({
             </Button>
           </Link>
         </nav>
-        <div className="border-t p-4">
+        <div className="border-t p-4 shrink-0">
           <a href="/api/admin/logout"> 
              <Button variant="outline" className="w-full">
                <LogOut className="mr-2 h-4 w-4" /> 退出登录
@@ -99,7 +72,7 @@ export default async function AdminLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 overflow-y-auto">
+      <main className="flex-1 p-6 overflow-hidden">
         {children}
       </main>
     </div>

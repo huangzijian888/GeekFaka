@@ -180,8 +180,8 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">商品管理</h1>
           <p className="text-muted-foreground">创建、编辑商品并管理库存</p>
@@ -209,149 +209,151 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      <div className="rounded-md border bg-card text-white">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[300px]">名称</TableHead>
-              <TableHead>分类</TableHead>
-              <TableHead>价格</TableHead>
-              <TableHead>库存</TableHead>
-              <TableHead>状态</TableHead>
-              <TableHead className="text-right">操作</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
-                </TableCell>
+      <div className="rounded-md border bg-card text-white flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-auto">
+          <Table>
+            <TableHeader className="sticky top-0 bg-card z-10">
+              <TableRow className="hover:bg-transparent border-b">
+                <TableHead className="w-[300px]">名称</TableHead>
+                <TableHead>分类</TableHead>
+                <TableHead>价格</TableHead>
+                <TableHead>库存</TableHead>
+                <TableHead>状态</TableHead>
+                <TableHead className="text-right">操作</TableHead>
               </TableRow>
-            ) : products.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                  暂无商品数据
-                </TableCell>
-              </TableRow>
-            ) : (
-              products.map((product) => (
-                <TableRow key={product.id} className="hover:bg-muted/40 transition-colors h-24 group">
-                  <TableCell className="py-4 relative">
-                    {/* 侧边装饰条 */}
-                    <div className="absolute left-0 top-4 bottom-4 w-1 bg-primary rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                    
-                    <div className="flex flex-col gap-1.5 pl-2">
-                      <span className="text-xl font-black text-slate-50 tracking-tight drop-shadow-sm leading-tight">
-                        {product.name}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono select-all">
-                          ID: {product.id}
-                        </code>
-                        <span className="text-xs text-muted-foreground/60 line-clamp-1 italic font-medium">
-                          {product.description || "暂无描述"}
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
+                  </TableCell>
+                </TableRow>
+              ) : products.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                    暂无商品数据
+                  </TableCell>
+                </TableRow>
+              ) : (
+                products.map((product) => (
+                  <TableRow key={product.id} className="hover:bg-muted/40 transition-colors h-24 group">
+                    <TableCell className="py-4 relative">
+                      {/* 侧边装饰条 */}
+                      <div className="absolute left-0 top-4 bottom-4 w-1 bg-primary rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                      
+                      <div className="flex flex-col gap-1.5 pl-2">
+                        <span className="text-xl font-black text-slate-50 tracking-tight drop-shadow-sm leading-tight">
+                          {product.name}
                         </span>
+                        <div className="flex items-center gap-2">
+                          <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono select-all">
+                            ID: {product.id}
+                          </code>
+                          <span className="text-xs text-muted-foreground/60 line-clamp-1 italic font-medium">
+                            {product.description || "暂无描述"}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="bg-secondary/50 border-border/50 text-xs font-normal">
-                      {product.category.name}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-lg font-bold text-primary tracking-tight">
-                      ¥{Number(product.price).toFixed(2)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className={cn(
-                      "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                      product.isTrafficItem
-                        ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                        : product._count.licenses === 0 
-                          ? "bg-destructive/10 text-destructive border-destructive/20" 
-                          : "bg-green-500/10 text-green-500 border-green-500/20"
-                    )}>
-                      {product.isTrafficItem ? "自动发货" : `库存: ${product._count.licenses}`}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Switch 
-                      checked={product.isActive} 
-                      onCheckedChange={() => handleToggleActive(product.id, product.isActive)}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                       {!product.isTrafficItem && (
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="bg-secondary/50 border-border/50 text-xs font-normal">
+                        {product.category.name}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-lg font-bold text-primary tracking-tight">
+                        ¥{Number(product.price).toFixed(2)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className={cn(
+                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+                        product.isTrafficItem
+                          ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                          : product._count.licenses === 0 
+                            ? "bg-destructive/10 text-destructive border-destructive/20" 
+                            : "bg-green-500/10 text-green-500 border-green-500/20"
+                      )}>
+                        {product.isTrafficItem ? "自动发货" : `库存: ${product._count.licenses}`}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Switch 
+                        checked={product.isActive} 
+                        onCheckedChange={() => handleToggleActive(product.id, product.isActive)}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                         {!product.isTrafficItem && (
+                           <Button 
+                             variant="secondary" 
+                             size="sm" 
+                             className="h-8 px-2 lg:px-3 bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20"
+                             onClick={() => {
+                               setStockProduct(product)
+                               setIsStockOpen(true)
+                             }}
+                           >
+                             <Key className="h-3.5 w-3.5 mr-1" />
+                             库存
+                           </Button>
+                         )}
                          <Button 
                            variant="secondary" 
                            size="sm" 
-                           className="h-8 px-2 lg:px-3 bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20"
-                           onClick={() => {
-                             setStockProduct(product)
-                             setIsStockOpen(true)
-                           }}
+                           className="h-8 px-2 lg:px-3 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                           onClick={() => handleOpenDialog(product)}
                          >
-                           <Key className="h-3.5 w-3.5 mr-1" />
-                           库存
+                           <Edit2 className="h-3.5 w-3.5 mr-1" />
+                           编辑
                          </Button>
-                       )}
-                       <Button 
-                         variant="secondary" 
-                         size="sm" 
-                         className="h-8 px-2 lg:px-3 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
-                         onClick={() => handleOpenDialog(product)}
-                       >
-                         <Edit2 className="h-3.5 w-3.5 mr-1" />
-                         编辑
-                       </Button>
-                       <Button 
-                         variant="ghost" 
-                         size="sm" 
-                         className="h-8 px-2 lg:px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                         onClick={() => handleDelete(product.id)}
-                       >
-                         <Trash2 className="h-3.5 w-3.5 mr-1" />
-                         删除
-                       </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                         <Button 
+                           variant="ghost" 
+                           size="sm" 
+                           className="h-8 px-2 lg:px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                           onClick={() => handleDelete(product.id)}
+                         >
+                           <Trash2 className="h-3.5 w-3.5 mr-1" />
+                           删除
+                         </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1 || loading}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            上一页
-          </Button>
-          <div className="text-sm text-muted-foreground">
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-end space-x-2 p-4 border-t bg-card shrink-0">
+          <div className="flex-1 text-sm text-muted-foreground">
             第 {page} / {totalPages} 页
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages || loading}
-          >
-            下一页
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1 || loading}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              上一页
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages || loading}
+            >
+              下一页
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      )}
+      </div>
 
       {/* Stock Management Dialog */}
       {stockProduct && (

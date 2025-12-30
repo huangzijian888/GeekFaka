@@ -2,14 +2,27 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAuthenticated } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: Request) {
   if (!await isAuthenticated()) return new NextResponse("Unauthorized", { status: 401 });
 
-  const articles = await prisma.article.findMany({
-    orderBy: { createdAt: "desc" }
-  });
+  const { searchParams } = new URL(req.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const skip = (page - 1) * limit;
 
-  return NextResponse.json(articles);
+  const [articles, total] = await prisma.$transaction([
+    prisma.article.findMany({
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" }
+    }),
+    prisma.article.count()
+  ]);
+
+  return NextResponse.json({
+    items: articles,
+    total
+  });
 }
 
 export async function POST(req: Request) {

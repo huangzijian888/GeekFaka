@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Trash2, Ticket, Loader2, CheckCircle2, XCircle, Percent, Coins, Edit } from "lucide-react"
+import { Plus, Trash2, Ticket, Loader2, CheckCircle2, XCircle, Percent, Coins, Edit, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -43,6 +43,11 @@ export default function CouponsPage() {
   const [isOpen, setIsOpen] = useState(false)
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null)
   
+  // Pagination State
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const PAGE_SIZE = 10
+
   // Form State
   const [formData, setFormData] = useState({
     code: "",
@@ -55,10 +60,10 @@ export default function CouponsPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    fetchCoupons()
+    fetchCoupons(page)
     fetchProducts()
     fetchCategories()
-  }, [])
+  }, [page])
 
   useEffect(() => {
     if (editingCoupon) {
@@ -79,12 +84,13 @@ export default function CouponsPage() {
     }
   }, [editingCoupon])
 
-  const fetchCoupons = async () => {
+  const fetchCoupons = async (currentPage: number) => {
     setLoading(true)
     try {
-      const res = await fetch("/api/admin/coupons")
+      const res = await fetch(`/api/admin/coupons?page=${currentPage}&limit=${PAGE_SIZE}`)
       const data = await res.json()
-      setCoupons(data)
+      setCoupons(data.items || [])
+      setTotalPages(Math.ceil((data.total || 0) / PAGE_SIZE))
     } catch (e) {
       console.error(e)
     } finally {
@@ -140,7 +146,7 @@ export default function CouponsPage() {
 
       if (res.ok) {
         setIsOpen(false)
-        fetchCoupons()
+        fetchCoupons(page)
       } else {
         const data = await res.json()
         alert(data.error || "保存失败")
@@ -156,7 +162,7 @@ export default function CouponsPage() {
     if (!confirm("确定要删除这个优惠码吗？")) return
     try {
       await fetch(`/api/admin/coupons/${id}`, { method: "DELETE" })
-      fetchCoupons()
+      fetchCoupons(page)
     } catch (e) {
       console.error(e)
     }
@@ -172,8 +178,8 @@ export default function CouponsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="flex justify-between items-center shrink-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">优惠码管理</h1>
           <p className="text-muted-foreground">创建通用、分类或指定商品的一次性折扣券</p>
@@ -183,82 +189,111 @@ export default function CouponsPage() {
         </Button>
       </div>
 
-      <div className="rounded-md border bg-card text-white">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>优惠码</TableHead>
-              <TableHead>类型</TableHead>
-              <TableHead>面值</TableHead>
-              <TableHead>适用范围</TableHead>
-              <TableHead>状态</TableHead>
-              <TableHead className="text-right">操作</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
-                </TableCell>
+      <div className="rounded-md border bg-card text-white flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-auto">
+          <Table>
+            <TableHeader className="sticky top-0 bg-card z-10">
+              <TableRow className="hover:bg-transparent border-b">
+                <TableHead>优惠码</TableHead>
+                <TableHead>类型</TableHead>
+                <TableHead>面值</TableHead>
+                <TableHead>适用范围</TableHead>
+                <TableHead>状态</TableHead>
+                <TableHead className="text-right">操作</TableHead>
               </TableRow>
-            ) : coupons.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                  暂无优惠码
-                </TableCell>
-              </TableRow>
-            ) : (
-              coupons.map((coupon) => (
-                <TableRow key={coupon.id} className="hover:bg-muted/30">
-                  <TableCell className="font-mono font-bold text-primary">{coupon.code}</TableCell>
-                  <TableCell>
-                    {coupon.discountType === "PERCENTAGE" ? (
-                      <span className="flex items-center gap-1 text-xs"><Percent className="h-3 w-3" /> 百分比</span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-xs"><Coins className="h-3 w-3" /> 固定金额</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-bold">
-                    {coupon.discountType === "PERCENTAGE" 
-                      ? `${Number(coupon.discountValue).toFixed(0)}%` 
-                      : `¥${Number(coupon.discountValue).toFixed(2)}`}
-                  </TableCell>
-                  <TableCell>
-                    {coupon.product ? (
-                      <Badge variant="outline" className="font-normal border-blue-500/30 text-blue-400">商品: {coupon.product.name}</Badge>
-                    ) : coupon.category ? (
-                      <Badge variant="outline" className="font-normal border-purple-500/30 text-purple-400">分类: {coupon.category.name}</Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">全站通用</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {coupon.isUsed ? (
-                      <Badge variant="secondary" className="bg-zinc-800 text-zinc-500 border-zinc-700">
-                        已使用 ({coupon.order?.orderNo})
-                      </Badge>
-                    ) : (
-                      <Badge variant="default" className="bg-green-600">
-                        可使用
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => { setEditingCoupon(coupon); setIsOpen(true); }}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(coupon.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : coupons.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                    暂无优惠码
+                  </TableCell>
+                </TableRow>
+              ) : (
+                coupons.map((coupon) => (
+                  <TableRow key={coupon.id} className="hover:bg-muted/30">
+                    <TableCell className="font-mono font-bold text-primary">{coupon.code}</TableCell>
+                    <TableCell>
+                      {coupon.discountType === "PERCENTAGE" ? (
+                        <span className="flex items-center gap-1 text-xs"><Percent className="h-3 w-3" /> 百分比</span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs"><Coins className="h-3 w-3" /> 固定金额</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-bold">
+                      {coupon.discountType === "PERCENTAGE" 
+                        ? `${Number(coupon.discountValue).toFixed(0)}%` 
+                        : `¥${Number(coupon.discountValue).toFixed(2)}`}
+                    </TableCell>
+                    <TableCell>
+                      {coupon.product ? (
+                        <Badge variant="outline" className="font-normal border-blue-500/30 text-blue-400">商品: {coupon.product.name}</Badge>
+                      ) : coupon.category ? (
+                        <Badge variant="outline" className="font-normal border-purple-500/30 text-purple-400">分类: {coupon.category.name}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">全站通用</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {coupon.isUsed ? (
+                        <Badge variant="secondary" className="bg-zinc-800 text-zinc-500 border-zinc-700">
+                          已使用 ({coupon.order?.orderNo})
+                        </Badge>
+                      ) : (
+                        <Badge variant="default" className="bg-green-600">
+                          可使用
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingCoupon(coupon); setIsOpen(true); }}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(coupon.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-end space-x-2 p-4 border-t bg-card shrink-0">
+          <div className="flex-1 text-sm text-muted-foreground">
+            第 {page} 页 / 共 {totalPages} 页
+          </div>
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              上一页
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              下一页
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

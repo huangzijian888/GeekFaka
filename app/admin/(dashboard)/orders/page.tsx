@@ -156,162 +156,166 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">订单管理</h1>
-          <p className="text-muted-foreground">查看流水与补单操作</p>
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="flex flex-col gap-4 shrink-0">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">订单管理</h1>
+            <p className="text-muted-foreground">查看流水与补单操作</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-sm">
+            <Input 
+              placeholder="搜索订单号或邮箱..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="bg-background/50"
+            />
+            <Button type="submit" variant="secondary">
+              <Search className="h-4 w-4" />
+            </Button>
+          </form>
+
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px] bg-background/50">
+                <SelectValue placeholder="全部状态" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">全部状态</SelectItem>
+                <SelectItem value="PAID">已支付</SelectItem>
+                <SelectItem value="PENDING">待支付</SelectItem>
+                <SelectItem value="FAILED">失败/过期</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={productFilter} onValueChange={setProductFilter}>
+              <SelectTrigger className="w-[180px] bg-background/50">
+                <SelectValue placeholder="全部商品" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">全部商品</SelectItem>
+                {products.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-4">
-        <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-sm">
-          <Input 
-            placeholder="搜索订单号或邮箱..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-background/50"
-          />
-          <Button type="submit" variant="secondary">
-            <Search className="h-4 w-4" />
-          </Button>
-        </form>
-
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px] bg-background/50">
-              <SelectValue placeholder="全部状态" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">全部状态</SelectItem>
-              <SelectItem value="PAID">已支付</SelectItem>
-              <SelectItem value="PENDING">待支付</SelectItem>
-              <SelectItem value="FAILED">失败/过期</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={productFilter} onValueChange={setProductFilter}>
-            <SelectTrigger className="w-[180px] bg-background/50">
-              <SelectValue placeholder="全部商品" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">全部商品</SelectItem>
-              {products.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="rounded-md border bg-card text-white">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>订单号</TableHead>
-              <TableHead>商品</TableHead>
-              <TableHead>金额</TableHead>
-              <TableHead>状态</TableHead>
-              <TableHead>支付方式</TableHead>
-              <TableHead>时间</TableHead>
-              <TableHead className="text-right">操作</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
-                </TableCell>
+      <div className="rounded-md border bg-card text-white flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-auto">
+          <Table>
+            <TableHeader className="sticky top-0 bg-card z-10">
+              <TableRow className="hover:bg-transparent border-b">
+                <TableHead>订单号</TableHead>
+                <TableHead>商品</TableHead>
+                <TableHead>金额</TableHead>
+                <TableHead>状态</TableHead>
+                <TableHead>支付方式</TableHead>
+                <TableHead>时间</TableHead>
+                <TableHead className="text-right">操作</TableHead>
               </TableRow>
-            ) : orders.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                  暂无订单数据
-                </TableCell>
-              </TableRow>
-            ) : (
-              orders.map((order) => (
-                <TableRow key={order.id} className="hover:bg-muted/30 h-16">
-                  <TableCell className="font-mono text-xs">
-                    <div className="flex flex-col gap-1">
-                       <span className="font-bold">{order.orderNo}</span>
-                       <span className="text-muted-foreground scale-90 origin-left">{order.email}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm font-medium line-clamp-1 max-w-[200px]" title={order.product.name}>
-                      {order.product.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground">x{order.quantity}</div>
-                  </TableCell>
-                  <TableCell className="font-bold text-primary">
-                    ¥{Number(order.totalAmount).toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    {getStatusBadge(order.status)}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground uppercase">
-                    {order.paymentMethod || "-"}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {new Date(order.createdAt).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                       {/* Link to public order page */}
-                       <Button 
-                         variant="ghost" 
-                         size="icon" 
-                         className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
-                         onClick={() => window.open(`/orders/${order.orderNo}`, "_blank")}
-                         title="查看前台详情"
-                       >
-                         <ExternalLink className="h-4 w-4" />
-                       </Button>
-
-                       {order.status === "PENDING" && (
-                         <Button 
-                           variant="outline" 
-                           size="sm" 
-                           className="h-8 text-xs border-green-500/30 text-green-500 hover:bg-green-500/10 hover:text-green-400"
-                           onClick={() => handleManualFulfill(order.id)}
-                           disabled={actionLoading === order.id}
-                         >
-                           {actionLoading === order.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "补单"}
-                         </Button>
-                       )}
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-32 text-center">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : orders.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                    暂无订单数据
+                  </TableCell>
+                </TableRow>
+              ) : (
+                orders.map((order) => (
+                  <TableRow key={order.id} className="hover:bg-muted/30 h-16">
+                    <TableCell className="font-mono text-xs">
+                      <div className="flex flex-col gap-1">
+                         <span className="font-bold">{order.orderNo}</span>
+                         <span className="text-muted-foreground scale-90 origin-left">{order.email}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm font-medium line-clamp-1 max-w-[200px]" title={order.product.name}>
+                        {order.product.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">x{order.quantity}</div>
+                    </TableCell>
+                    <TableCell className="font-bold text-primary">
+                      ¥{Number(order.totalAmount).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(order.status)}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground uppercase">
+                      {order.paymentMethod || "-"}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(order.createdAt).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                         {/* Link to public order page */}
+                         <Button 
+                           variant="ghost" 
+                           size="icon" 
+                           className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                           onClick={() => window.open(`/orders/${order.orderNo}`, "_blank")}
+                           title="查看前台详情"
+                         >
+                           <ExternalLink className="h-4 w-4" />
+                         </Button>
 
-      {/* Pagination Controls */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          共 {totalCount} 条记录，页码 {currentPage} / {totalPages}
+                         {order.status === "PENDING" && (
+                           <Button 
+                             variant="outline" 
+                             size="sm" 
+                             className="h-8 text-xs border-green-500/30 text-green-500 hover:bg-green-500/10 hover:text-green-400"
+                             onClick={() => handleManualFulfill(order.id)}
+                             disabled={actionLoading === order.id}
+                           >
+                             {actionLoading === order.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "补单"}
+                           </Button>
+                         )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage <= 1 || loading}
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" /> 上一页
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages || loading}
-          >
-            下一页 <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between p-4 border-t bg-card shrink-0">
+          <div className="text-sm text-muted-foreground">
+            共 {totalCount} 条记录，页码 {currentPage} / {totalPages}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1 || loading}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" /> 上一页
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages || loading}
+            >
+              下一页 <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
