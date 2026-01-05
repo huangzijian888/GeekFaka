@@ -218,36 +218,6 @@ export default function SettingsPage() {
                      在 <a href="https://crisp.chat/" target="_blank" className="underline hover:text-primary">Crisp</a> 注册并获取 Website ID，即可开启右下角在线客服。留空则关闭。
                    </p>
                 </div>
-                <div className="grid gap-2 pt-2">
-                   <Label>Cliproxy API Key (流量代理对接)</Label>
-                   <Input 
-                     value={draftConfig.cliproxy_api_key || ""}
-                     onChange={e => handleChange("cliproxy_api_key", e.target.value)}
-                     placeholder="在此填入您的 Cliproxy API Key"
-                     className="font-mono"
-                   />
-                   <p className="text-xs text-muted-foreground">
-                     从 Cliproxy 后台获取，用于自动化创建子账号。
-                   </p>
-                </div>
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="grid gap-2">
-                    <Label>代理服务器地址 (Host)</Label>
-                    <Input 
-                      value={draftConfig.proxy_host || ""}
-                      onChange={e => handleChange("proxy_host", e.target.value)}
-                      placeholder="e.g. proxy.htstore.cc"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>代理服务器端口 (Port)</Label>
-                    <Input 
-                      value={draftConfig.proxy_port || ""}
-                      onChange={e => handleChange("proxy_port", e.target.value)}
-                      placeholder="e.g. 10000"
-                    />
-                  </div>
-                </div>
                 <div className="grid gap-2">
                    <Label>底部联系方式</Label>
                    <Textarea 

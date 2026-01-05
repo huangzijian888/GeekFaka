@@ -22,9 +22,6 @@ export function Navbar() {
             <Link href="/pages" className="transition-colors hover:text-foreground/80 text-muted-foreground">
               帮助中心
             </Link>
-            <Link href="/traffic" className="transition-colors hover:text-foreground/80 text-muted-foreground">
-              流量查询
-            </Link>
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">

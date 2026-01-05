@@ -1,16 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit2, Trash2, Loader2, PackageOpen, Key, ChevronLeft, ChevronRight, Filter } from "lucide-react"
+import { Plus, Edit2, Trash2, Loader2, Key, ChevronLeft, ChevronRight, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { StockManager } from "@/components/admin/stock-manager"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
@@ -29,8 +28,6 @@ interface Product {
   category: Category
   isActive: boolean
   deliveryFormat: string
-  isTrafficItem: boolean
-  trafficDuration: number
   _count: {
     licenses: number
   }
@@ -59,9 +56,7 @@ export default function ProductsPage() {
     description: "",
     price: "",
     categoryId: "",
-    deliveryFormat: "SINGLE",
-    isTrafficItem: false,
-    trafficDuration: 0
+    deliveryFormat: "SINGLE"
   })
 
   useEffect(() => {
@@ -107,9 +102,7 @@ export default function ProductsPage() {
         description: product.description || "",
         price: product.price,
         categoryId: product.categoryId,
-        deliveryFormat: product.deliveryFormat || "SINGLE",
-        isTrafficItem: product.isTrafficItem || false,
-        trafficDuration: product.trafficDuration || 0
+        deliveryFormat: product.deliveryFormat || "SINGLE"
       })
     } else {
       setEditingProduct(null)
@@ -118,9 +111,7 @@ export default function ProductsPage() {
         description: "",
         price: "",
         categoryId: categories[0]?.id || "",
-        deliveryFormat: "SINGLE",
-        isTrafficItem: false,
-        trafficDuration: 0
+        deliveryFormat: "SINGLE"
       })
     }
     setIsDialogOpen(true)
@@ -269,13 +260,11 @@ export default function ProductsPage() {
                     <TableCell>
                       <div className={cn(
                         "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                        product.isTrafficItem
-                          ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                          : product._count.licenses === 0 
-                            ? "bg-destructive/10 text-destructive border-destructive/20" 
-                            : "bg-green-500/10 text-green-500 border-green-500/20"
+                        product._count.licenses === 0 
+                          ? "bg-destructive/10 text-destructive border-destructive/20" 
+                          : "bg-green-500/10 text-green-500 border-green-500/20"
                       )}>
-                        {product.isTrafficItem ? "自动发货" : `库存: ${product._count.licenses}`}
+                        {`库存: ${product._count.licenses}`}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -286,20 +275,18 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                         {!product.isTrafficItem && (
-                           <Button 
-                             variant="secondary" 
-                             size="sm" 
-                             className="h-8 px-2 lg:px-3 bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20"
-                             onClick={() => {
-                               setStockProduct(product)
-                               setIsStockOpen(true)
-                             }}
-                           >
-                             <Key className="h-3.5 w-3.5 mr-1" />
-                             库存
-                           </Button>
-                         )}
+                         <Button 
+                           variant="secondary" 
+                           size="sm" 
+                           className="h-8 px-2 lg:px-3 bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20"
+                           onClick={() => {
+                             setStockProduct(product)
+                             setIsStockOpen(true)
+                           }}
+                         >
+                           <Key className="h-3.5 w-3.5 mr-1" />
+                           库存
+                         </Button>
                          <Button 
                            variant="secondary" 
                            size="sm" 
@@ -440,33 +427,6 @@ export default function ProductsPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-[10px] text-muted-foreground">影响用户查收卡密时的展示方式</p>
-                </div>
-
-                <div className="pt-2 space-y-4 border-t border-border/50">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>流量商品</Label>
-                      <p className="text-[10px] text-muted-foreground">支付后自动在代理服务器开户</p>
-                    </div>
-                    <Switch 
-                      checked={formData.isTrafficItem}
-                      onCheckedChange={(val) => setFormData({ ...formData, isTrafficItem: val })}
-                    />
-                  </div>
-
-                  {formData.isTrafficItem && (
-                    <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
-                      <Label htmlFor="trafficDuration">有效期 (小时)</Label>
-                      <Input
-                        id="trafficDuration"
-                        type="number"
-                        value={formData.trafficDuration}
-                        onChange={(e) => setFormData({ ...formData, trafficDuration: parseInt(e.target.value) || 0 })}
-                        placeholder="0 为不限期"
-                      />
-                      <p className="text-[10px] text-muted-foreground italic">设置为 24 则到期后系统自动销户</p>
-                    </div>
-                  )}
                 </div>
 
                 <div className="pt-4">
