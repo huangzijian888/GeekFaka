@@ -85,7 +85,7 @@ export default function ProductsPage() {
         setTotalPages(prodData.pagination?.pages || 1)
       }
       if (catRes.ok) {
-        setCategories(catData)
+        setCategories(catData.items || [])
       }
     } catch (error) {
       console.error(error)
